@@ -1,9 +1,9 @@
 Nostalgia bucklespring keyboard sound
 =====================================
 
-This project emulates the sound of my old faithful IBM Model-M bucklespring
-keyboard while typing on my notebook, mainly for the purpose of annoying the
-hell out of my coworkers.
+This project emulates the sound of my old faithful IBM Model-M space saver
+bucklespring keyboard while typing on my notebook, mainly for the purpose of
+annoying the hell out of my coworkers.
 
 ![Model M](model-m.jpg)
 
