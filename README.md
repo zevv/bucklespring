@@ -1,4 +1,5 @@
-= Nostalgia bucklespring keyboard sound
+Nostalgia bucklespring keyboard sound
+=====================================
 
 This project emulates the sound of my old faithful IBM Model-M bucklespring
 keyboard while typing on my notebook, with the main function of annoying the
@@ -6,8 +7,8 @@ hell out of my coworkers.
 
 ![Model M](model-m.jpg)
 
-
-== Installation
+Installation
+------------
 
 ````
 $ sudo apt-get install libopenal-dev libalut-dev libxtst-dev
@@ -16,7 +17,8 @@ $ ./buckle
 ````
 
 
-== Usage
+Usage
+-----
 
 ````
 usage: ./buckle [options]
@@ -30,7 +32,10 @@ valid options:
   -v        increase verbosity / debugging
 ````
 
-Notes: bucklespring uses the OpenAL library for mixing samples and providing a
+OpenAL notes
+------------
+
+Bucklespring uses the OpenAL library for mixing samples and providing a
 realistic 3D audio playback. The default OpenAL settings can cause a slight
 delay in playback. Edit or create the OpenAL configuration file `~/.alsoftrc`
 and add the following options:
