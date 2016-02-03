@@ -7,11 +7,11 @@ annoying the hell out of my coworkers.
 
 ![Model M](model-m.jpg)
 
-Bucklespring runs as a background process and plays back the sound of each
-pressed key on your computer, as if you were using an IBM Model-M keyboard.
-The sound of each key has carefully been sampled, and is played back simulating
-the proper distance and direction for a realistic 3D sound palette of pure
-nostalgic bliss.
+Bucklespring runs as a background process and plays back the sound of each key
+pressed and released on your keyboard, just as if you were using an IBM
+Model-M. The sound of each key has carefully been sampled, and is played back
+while simulating the proper distance and direction for a realistic 3D sound
+palette of pure nostalgic bliss.
 
 Installation
 ------------
