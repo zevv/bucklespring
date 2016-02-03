@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <unistd.h>
+#include <limits.h>
 #include <stdbool.h>
 
 #include <X11/Xproto.h>
@@ -17,6 +18,7 @@
 #include <AL/alc.h>
 #include <AL/alut.h>
 
+#define SRC_INVALID INT_MAX
 
 #define TEST_ERROR(_msg)		\
 	error = alGetError();		\
@@ -276,7 +278,7 @@ static int play(int code, int press)
 		buf[idx] = alutCreateBufferFromFile(fname);
 		if(buf[idx] == 0) {
 			fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alutGetErrorString (alutGetError ()));
-			src[idx] = -1;
+			src[idx] = SRC_INVALID;
 			return -1;
 		}
 	
@@ -291,7 +293,7 @@ static int play(int code, int press)
 		TEST_ERROR("buffer binding");
 	}
 
-	if(src[idx] > 0) {
+	if(src[idx] != 0 && src[idx] != SRC_INVALID) {
 		alSourcePlay(src[idx]);
 		TEST_ERROR("source playing");
 	}
