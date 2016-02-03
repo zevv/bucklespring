@@ -20,6 +20,9 @@ LD 	= $(CROSS)gcc
 $(BIN):	$(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS)
 
+rec: rec.c
+	gcc -Wall -Werror rec.c -o rec
+
 clean:	
-	rm -f $(OBJS) $(BIN) core
+	rm -f $(OBJS) $(BIN) core rec
 	
