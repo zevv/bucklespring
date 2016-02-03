@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 	ALfloat listenerOri[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
 	ALCenum error;
 
-	alutInit(0, NULL);
+	alutInitWithoutContext(0, NULL);
 
 	if (!opt_device) {
 		opt_device = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
@@ -274,11 +274,10 @@ static int play(int code, int press)
 			return -1;
 		}
 	
-		double x = find_key_loc(code);
-
 		alGenSources((ALuint)1, &src[idx]);
 		TEST_ERROR("source generation");
 
+		double x = find_key_loc(code);
 		alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
 
 		alSourcei(src[idx], AL_BUFFER, buf[idx]);
