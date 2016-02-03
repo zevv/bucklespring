@@ -2,10 +2,13 @@ Nostalgia bucklespring keyboard sound
 =====================================
 
 This project emulates the sound of my old faithful IBM Model-M bucklespring
-keyboard while typing on my notebook, with the main function of annoying the
+keyboard while typing on my notebook, mainly for the purpose of annoying the
 hell out of my coworkers.
 
 ![Model M](model-m.jpg)
+
+The sound of each key has carefully been sampled, and is played back using the
+OpenAL audio library for a realistic 3D sound palette of pure nostalgic bliss.
 
 Installation
 ------------
