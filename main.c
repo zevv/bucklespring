@@ -26,6 +26,14 @@
 	}
 
 
+static void usage(char *exe);
+static void list_devices(void);
+static double find_key_loc(int code);
+static int play(int code, int press);
+static void printd(const char *fmt, ...);
+void key_pressed_cb(XPointer arg, XRecordInterceptData *d);
+
+
 /* 
  * Horizontal position on keyboard for each key as they are located on my model-D
  */
@@ -41,12 +49,6 @@ static int keyloc[][32] = {
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x69, 0x6c, 0x6a, -1 },
 };
 
-static void usage(char *exe);
-static void list_devices(void);
-static double find_key_loc(int code);
-static int play(int code, int press);
-static void printd(const char *fmt, ...);
-void key_pressed_cb(XPointer arg, XRecordInterceptData *d);
 
 static int opt_verbose = 0;
 static int opt_stereo_width = 50;
@@ -54,14 +56,8 @@ static const char *opt_device = NULL;
 static const char *opt_path_audio = "./wav";
 
 
-
-
 int main(int argc, char **argv)
 {
-	ALCdevice *device = NULL;
-	ALCcontext *context = NULL;
-	ALfloat listenerOri[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
-	ALCenum error;
 	int c;
 	int rv = EXIT_SUCCESS;
 
@@ -95,6 +91,11 @@ int main(int argc, char **argv)
 
 	/* Create openal context */
 
+	ALCdevice *device = NULL;
+	ALCcontext *context = NULL;
+	ALfloat listenerOri[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
+	ALCenum error;
+
 	alutInit(0, NULL);
 
 	if (!opt_device) {
@@ -121,42 +122,46 @@ int main(int argc, char **argv)
 	alListener3f(AL_VELOCITY, 0, 0, 0);
 	alListenerfv(AL_ORIENTATION, listenerOri);
 
+
 	/* Initialize and start Xrecord context */
+	
+	XRecordRange* rr;
+	XRecordClientSpec rcs;
+	XRecordContext rc;
 
 	printd("Opening Xrecord context");
 
 	Display *dpy = XOpenDisplay(NULL);
 	if(dpy == NULL) {
 		fprintf(stderr, "Unable to open display\n");
+		rv = EXIT_FAILURE;
 		goto out;
 	}
     
-	XRecordRange* rr;
-	XRecordClientSpec rcs;
-	XRecordContext rc;
-
 	rr = XRecordAllocRange ();
 	if(rr == NULL) {
 		fprintf(stderr, "XRecordAllocRange error\n");
-		exit(1);
+		rv = EXIT_FAILURE;
+		goto out;
 	}
 
 	rr->device_events.first = KeyPress;
 	rr->device_events.last = KeyRelease;
-	
 	rcs = XRecordAllClients;
 
 	rc = XRecordCreateContext (dpy, 0, &rcs, 1, &rr, 1);
 	if(rc == 0) {
 		fprintf(stderr, "XRecordCreateContext error\n");
-		exit(1);
+		rv = EXIT_FAILURE;
+		goto out;
 	}
 
 	XFree (rr);
 
 	if(XRecordEnableContext(dpy, rc, key_pressed_cb, NULL) == 0) {
 		fprintf(stderr, "XRecordEnableContext error\n");
-		exit(1);
+		rv = EXIT_FAILURE;
+		goto out;
 	}
 
 out:
@@ -241,6 +246,10 @@ static double find_key_loc(int code)
 }
 
 
+/*
+ * Play audio file for given keycode. Wav files are loaded on demand
+ */
+
 static int play(int code, int press)
 {
 	ALCenum error;
@@ -280,11 +289,13 @@ static int play(int code, int press)
 	alSourcePlay(src[idx]);
 	TEST_ERROR("source playing");
 
-	printf("d\n");
-
 	return 0;
 }
 
+
+/*
+ * Xrecord event callback
+ */
 
 void key_pressed_cb(XPointer arg, XRecordInterceptData *d) 
 {
