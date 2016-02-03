@@ -1,8 +1,9 @@
-= Nostalgia bucklespring keyboard sound
+Nostalgia bucklespring keyboard sound
+=====================================
 
 
-
-== Installation
+Installation
+------------
 
 ````
 $ sudo apt-get install libopenal-dev libalut-dev libxtst-dev
@@ -11,7 +12,8 @@ $ ./buckle
 ````
 
 
-== Usage
+Usage
+-----
 
 ````
 usage: ./buckle [options]
@@ -25,7 +27,10 @@ valid options:
   -v        increase verbosity / debugging
 ````
 
-Notes: bucklespring uses the OpenAL library for mixing samples and providing a
+OpenAL notes
+------------
+
+Bucklespring uses the OpenAL library for mixing samples and providing a
 realistic 3D audio playback. The default OpenAL settings can cause a slight
 delay in playback. Edit or create the OpenAL configuration file `~/.alsoftrc`
 and add the following options:
