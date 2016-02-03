@@ -1,11 +1,7 @@
-/*
- * OpenAL example
- *
- * Copyright(C) Florian Fainelli <f.fainelli@gmail.com>
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <errno.h>
 #include <stdint.h>
 #include <inttypes.h>
@@ -26,7 +22,7 @@
 	error = alGetError();		\
 	if (error != AL_NO_ERROR) {	\
 		fprintf(stderr, _msg "\n");	\
-		return -1;		\
+		exit(1);		\
 	}
 
 
@@ -44,6 +40,182 @@ static int keyloc[][32] = {
 	{ 0x1d, 0x7d, 0x38, 0x39, 0x64, 0x61, 0x67, -1 },
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x69, 0x6c, 0x6a, -1 },
 };
+
+static void usage(char *exe);
+static void list_devices(void);
+static double find_key_loc(int code);
+static int play(int code, int press);
+static void printd(const char *fmt, ...);
+void key_pressed_cb(XPointer arg, XRecordInterceptData *d);
+
+static int opt_verbose = 0;
+static int opt_stereo_width = 50;
+static const char *opt_device = NULL;
+static const char *opt_path_audio = "./wav";
+
+
+
+
+int main(int argc, char **argv)
+{
+	ALCdevice *device = NULL;
+	ALCcontext *context = NULL;
+	ALfloat listenerOri[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
+	ALCenum error;
+	int c;
+	int rv = EXIT_SUCCESS;
+
+	while( (c = getopt(argc, argv, "hvd:lp:s:")) != EOF) {
+		switch(c) {
+			case 'd':
+				opt_device = optarg;
+				break;
+			case 'h':
+				usage(argv[0]);
+				return 0;
+			case 'l':
+				list_devices();
+				return 0;
+			case 'v':
+				opt_verbose++;
+				break;
+			case 'p':
+				opt_path_audio = optarg;
+				break;
+			case 's':
+				opt_stereo_width = atoi(optarg);
+				break;
+			default:
+				usage(argv[0]);
+				return 1;
+				break;
+		}
+	}
+
+
+	/* Create openal context */
+
+	alutInit(0, NULL);
+
+	if (!opt_device) {
+		opt_device = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+	}
+
+	printd("Opening OpenAL audio device \"%s\"", opt_device);
+
+	device = alcOpenDevice(opt_device);
+	if (!device) {
+		fprintf(stderr, "unable to open default device\n");
+		rv = EXIT_FAILURE;
+		goto out;
+	}
+
+	context = alcCreateContext(device, NULL);
+	if (!alcMakeContextCurrent(context)) {
+		fprintf(stderr, "failed to make default context\n");
+		return -1;
+	}
+	TEST_ERROR("make default context");
+		
+	alListener3f(AL_POSITION, 0, 0, 0);
+	alListener3f(AL_VELOCITY, 0, 0, 0);
+	alListenerfv(AL_ORIENTATION, listenerOri);
+
+	/* Initialize and start Xrecord context */
+
+	printd("Opening Xrecord context");
+
+	Display *dpy = XOpenDisplay(NULL);
+	if(dpy == NULL) {
+		fprintf(stderr, "Unable to open display\n");
+		goto out;
+	}
+    
+	XRecordRange* rr;
+	XRecordClientSpec rcs;
+	XRecordContext rc;
+
+	rr = XRecordAllocRange ();
+	if(rr == NULL) {
+		fprintf(stderr, "XRecordAllocRange error\n");
+		exit(1);
+	}
+
+	rr->device_events.first = KeyPress;
+	rr->device_events.last = KeyRelease;
+	
+	rcs = XRecordAllClients;
+
+	rc = XRecordCreateContext (dpy, 0, &rcs, 1, &rr, 1);
+	if(rc == 0) {
+		fprintf(stderr, "XRecordCreateContext error\n");
+		exit(1);
+	}
+
+	XFree (rr);
+
+	if(XRecordEnableContext(dpy, rc, key_pressed_cb, NULL) == 0) {
+		fprintf(stderr, "XRecordEnableContext error\n");
+		exit(1);
+	}
+
+out:
+	device = alcGetContextsDevice(context);
+	alcMakeContextCurrent(NULL);
+	if(context) alcDestroyContext(context);
+	if(device) alcCloseDevice(device);
+
+	return rv;
+}
+
+
+static void usage(char *exe)
+{
+	fprintf(stderr, 
+		"usage: %s [options]\n"
+		"\n"
+		"valid options:\n"
+		"  -d DEVICE use OpenAL audio device DEVICE\n"
+		"  -h        show help\n"
+		"  -l        list available openAL audio devices\n"
+		"  -p PATH   load .wav files from directory PATH\n"
+		"  -s WIDTH  set stereo width [0 .. 100]\n"
+		"  -v        increase verbosity / debugging\n",
+		exe
+       );
+}
+
+static void list_devices(void)
+{
+	const ALCchar *devices = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+	const ALCchar *device = devices, *next = devices + 1;
+	size_t len = 0;
+
+	printf("Available audio devices:");
+	while (device && *device != '\0' && next && *next != '\0') {
+		fprintf(stdout, " \"%s\"", device);
+		len = strlen(device);
+		device += (len + 1);
+		next += (len + 2);
+	}
+	printf("\n");
+}
+
+
+static void printd(const char *fmt, ...)
+{
+	if(opt_verbose) {
+		
+		char buf[256];
+		va_list va;
+
+		va_start(va, fmt);
+		vsnprintf(buf, sizeof(buf), fmt, va);
+		va_end(va);
+
+		fprintf(stderr, "%s\n", buf);
+	}
+}
 
 
 /*
@@ -83,11 +255,13 @@ static int play(int code, int press)
 	if(src[idx] == 0) {
 
 		char fname[256];
-		snprintf(fname, sizeof(fname), "wav/%02x-%d.wav", code, press);
+		snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, code, press);
+
+		printd("Loading audio file \"%s\"", fname);
 
 		buf[idx] = alutCreateBufferFromFile(fname);
 		if(buf[idx] == 0) {
-			fprintf(stderr, "%s\n", alutGetErrorString (alutGetError ()));
+			fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alutGetErrorString (alutGetError ()));
 			return -1;
 		}
 	
@@ -96,11 +270,10 @@ static int play(int code, int press)
 		alGenSources((ALuint)1, &src[idx]);
 		TEST_ERROR("source generation");
 
-		alSource3f(src[idx], AL_POSITION, -x, 0, 1.0);
+		alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
 
 		alSourcei(src[idx], AL_BUFFER, buf[idx]);
 		TEST_ERROR("buffer binding");
-
 	}
 
 
@@ -140,81 +313,7 @@ void key_pressed_cb(XPointer arg, XRecordInterceptData *d)
 }
 
 
-int main(int argc, char **argv)
-{
-	ALboolean enumeration;
-	const ALCchar *defaultDeviceName = argv[1];
-	ALCdevice *device;
-	ALCcontext *context;
-	ALfloat listenerOri[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
-	ALCenum error;
+/*
+ * End
+ */
 
-
-	/* Create openal context */
-
-	alutInit(0, NULL);
-
-	if (!defaultDeviceName)
-		defaultDeviceName = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
-
-	device = alcOpenDevice(defaultDeviceName);
-	if (!device) {
-		fprintf(stderr, "unable to open default device\n");
-		return -1;
-	}
-
-	alGetError();
-
-	context = alcCreateContext(device, NULL);
-	if (!alcMakeContextCurrent(context)) {
-		fprintf(stderr, "failed to make default context\n");
-		return -1;
-	}
-	TEST_ERROR("make default context");
-		
-	alListener3f(AL_POSITION, 0, 0, 0);
-	alListener3f(AL_VELOCITY, 0, 0, 0);
-	alListenerfv(AL_ORIENTATION, listenerOri);
-
-
-	/* Initialize and start Xrecord context */
-
-	Display *dpy = XOpenDisplay(NULL);
-	Window win = XDefaultRootWindow(dpy);
-    
-	XRecordRange* rr;
-	XRecordClientSpec rcs;
-	XRecordContext rc;
-
-	rr = XRecordAllocRange ();
-	if(rr == NULL) {
-		fprintf(stderr, "XRecordAllocRange error\n");
-		exit(1);
-	}
-
-	rr->device_events.first = KeyPress;
-	rr->device_events.last = KeyRelease;
-	
-	rcs = XRecordAllClients;
-
-	rc = XRecordCreateContext (dpy, 0, &rcs, 1, &rr, 1);
-	if(rc == 0) {
-		fprintf(stderr, "XRecordCreateContext error\n");
-		exit(1);
-	}
-
-	XFree (rr);
-
-	if(XRecordEnableContext(dpy, rc, key_pressed_cb, NULL) == NULL) {
-		fprintf(stderr, "XRecordEnableContext error\n");
-		exit(1);
-	}
-
-
-	device = alcGetContextsDevice(context);
-	alcMakeContextCurrent(NULL);
-	alcDestroyContext(context);
-	alcCloseDevice(device);
-
-	return 0;
-}

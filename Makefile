@@ -2,9 +2,12 @@
 BIN   	= buckle
 SRC 	= main.c
 
-CFLAGS  += -Wall -O3 -g $(shell pkg-config --cflags openal freealut x11)
-CFLAGS	+= -fno-diagnostics-show-caret
-LDFLAGS += -g $(shell pkg-config --libs openal freealut x11) -lXtst
+CFLAGS  += -Wall -Werror
+CFLAGS	+= -O3 -g 
+LDFLAGS += -g 
+
+LDFLAGS += $(shell pkg-config --libs openal freealut xtst x11)
+CFLAGS  += $(shell pkg-config --cflags openal freealut xtst x11)
 
 CROSS	=
 OBJS    = $(subst .c,.o, $(SRC))
