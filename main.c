@@ -9,13 +9,10 @@
 #include <limits.h>
 #include <stdbool.h>
 
-#include <X11/Xproto.h>
-#include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 #include <X11/extensions/record.h>
 
 #include <AL/al.h>
-#include <AL/alc.h>
 #include <AL/alut.h>
 
 #define SRC_INVALID INT_MAX
@@ -33,11 +30,12 @@ static void list_devices(void);
 static double find_key_loc(int code);
 static int play(int code, int press);
 static void printd(const char *fmt, ...);
+static int monitor_keys(void);
 void key_pressed_cb(XPointer arg, XRecordInterceptData *d);
 
 
 /* 
- * Horizontal position on keyboard for each key as they are located on my model-D
+ * Horizontal position on keyboard for each key as they are located on my model-M
  */
 
 static int keyloc[][32] = {
@@ -128,7 +126,20 @@ int main(int argc, char **argv)
 	alListener3f(AL_VELOCITY, 0, 0, 0);
 	alListenerfv(AL_ORIENTATION, listenerOri);
 
+	monitor_keys();
 
+out:
+	device = alcGetContextsDevice(context);
+	alcMakeContextCurrent(NULL);
+	if(context) alcDestroyContext(context);
+	if(device) alcCloseDevice(device);
+
+	return rv;
+}
+
+
+static int monitor_keys(void)
+{
 	/* Initialize and start Xrecord context */
 	
 	XRecordRange* rr;
@@ -140,15 +151,13 @@ int main(int argc, char **argv)
 	Display *dpy = XOpenDisplay(NULL);
 	if(dpy == NULL) {
 		fprintf(stderr, "Unable to open display\n");
-		rv = EXIT_FAILURE;
-		goto out;
+		return -1;
 	}
     
 	rr = XRecordAllocRange ();
 	if(rr == NULL) {
 		fprintf(stderr, "XRecordAllocRange error\n");
-		rv = EXIT_FAILURE;
-		goto out;
+		return -1;
 	}
 
 	rr->device_events.first = KeyPress;
@@ -158,25 +167,19 @@ int main(int argc, char **argv)
 	rc = XRecordCreateContext (dpy, 0, &rcs, 1, &rr, 1);
 	if(rc == 0) {
 		fprintf(stderr, "XRecordCreateContext error\n");
-		rv = EXIT_FAILURE;
-		goto out;
+		return -1;
 	}
 
 	XFree (rr);
 
 	if(XRecordEnableContext(dpy, rc, key_pressed_cb, NULL) == 0) {
 		fprintf(stderr, "XRecordEnableContext error\n");
-		rv = EXIT_FAILURE;
-		goto out;
+		return -1;
 	}
 
-out:
-	device = alcGetContextsDevice(context);
-	alcMakeContextCurrent(NULL);
-	if(context) alcDestroyContext(context);
-	if(device) alcCloseDevice(device);
+	/* We never get here */
 
-	return rv;
+	return 0;
 }
 
 
