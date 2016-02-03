@@ -52,6 +52,7 @@ static int keyloc[][32] = {
 
 static int opt_verbose = 0;
 static int opt_stereo_width = 50;
+static int opt_gain = 100;
 static const char *opt_device = NULL;
 static const char *opt_path_audio = "./wav";
 
@@ -61,10 +62,13 @@ int main(int argc, char **argv)
 	int c;
 	int rv = EXIT_SUCCESS;
 
-	while( (c = getopt(argc, argv, "hvd:lp:s:")) != EOF) {
+	while( (c = getopt(argc, argv, "hvd:g:lp:s:")) != EOF) {
 		switch(c) {
 			case 'd':
 				opt_device = optarg;
+				break;
+			case 'g':
+				opt_gain = atoi(optarg);
 				break;
 			case 'h':
 				usage(argv[0]);
@@ -181,10 +185,11 @@ static void usage(char *exe)
 		"\n"
 		"valid options:\n"
 		"  -d DEVICE use OpenAL audio device DEVICE\n"
+		"  -g GAIN   set playback gane [0..100]\n"
 		"  -h        show help\n"
 		"  -l        list available openAL audio devices\n"
 		"  -p PATH   load .wav files from directory PATH\n"
-		"  -s WIDTH  set stereo width [0 .. 100]\n"
+		"  -s WIDTH  set stereo width [0..100]\n"
 		"  -v        increase verbosity / debugging\n",
 		exe
        );
@@ -271,6 +276,7 @@ static int play(int code, int press)
 		buf[idx] = alutCreateBufferFromFile(fname);
 		if(buf[idx] == 0) {
 			fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alutGetErrorString (alutGetError ()));
+			src[idx] = -1;
 			return -1;
 		}
 	
@@ -279,14 +285,16 @@ static int play(int code, int press)
 
 		double x = find_key_loc(code);
 		alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
+		alSourcef(src[idx], AL_GAIN, opt_gain / 100.0);
 
 		alSourcei(src[idx], AL_BUFFER, buf[idx]);
 		TEST_ERROR("buffer binding");
 	}
 
-
-	alSourcePlay(src[idx]);
-	TEST_ERROR("source playing");
+	if(src[idx] > 0) {
+		alSourcePlay(src[idx]);
+		TEST_ERROR("source playing");
+	}
 
 	return 0;
 }
