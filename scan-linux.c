@@ -87,5 +87,10 @@ void key_pressed_cb(XPointer arg, XRecordInterceptData *d)
 	XRecordFreeData (d);
 }
 
+
+void open_console(void)
+{
+}
+
 #endif
 

@@ -89,6 +89,9 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if(opt_verbose) {
+		open_console();
+	}
 
 	/* Create openal context */
 

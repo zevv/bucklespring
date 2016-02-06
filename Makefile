@@ -11,7 +11,7 @@ ifdef mingw
  CROSS   := i686-w64-mingw32-
  CFLAGS  += -Iwin32/include
  CFLAGS  += -Ifreealut-1.1.0/include
- CFLAGS  += -DHAVE_WINDOWS_H -DHAVE_SLEEP -DHAVE_STAT
+ LDFLAGS += -mwindows
  LIBS    += -Lwin32/lib -lalut -lOpenAL32 
 else
  BIN     := $(NAME)
