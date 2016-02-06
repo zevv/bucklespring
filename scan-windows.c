@@ -3,6 +3,7 @@
 
 #include <windows.h>
 #include <winuser.h>
+#include <stdio.h>
 
 #include "buckle.h"
 
@@ -38,12 +39,7 @@ LRESULT CALLBACK handle_kbh(int nCode, WPARAM wParam, LPARAM lParam)
 
 	play(code, updown);
 
-	LRESULT hook_result = -1;
-	if (nCode < 0) {
-		hook_result = CallNextHookEx(kbh, nCode, wParam, lParam);
-	}
-
-	return hook_result;
+	return CallNextHookEx(kbh, nCode, wParam, lParam);
 }
 
 

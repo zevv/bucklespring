@@ -22,6 +22,7 @@ endif
 OBJS    = $(subst .c,.o, $(SRC))
 CC 	= $(CROSS)gcc
 LD 	= $(CROSS)gcc
+STRIP 	= $(CROSS)strip
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -35,3 +36,5 @@ rec: rec.c
 clean:
 	rm -f $(OBJS) $(BIN) core rec
 
+strip: $(BIN)
+	$(STRIP) $(BIN)
