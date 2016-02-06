@@ -33,27 +33,8 @@ LRESULT CALLBACK handle_kbh(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	KBDLLHOOKSTRUCT *ev = (KBDLLHOOKSTRUCT *)lParam;
 
-	int updown = 0;
+	int updown = (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN);
 	int code = ev->scanCode;
-
-	if(ev->vkCode == 27) {
-		exit(0);
-	}
-
-	switch (wParam) {
-		case WM_KEYDOWN:
-		case WM_SYSKEYDOWN:
-			updown = 1;
-			break;
-
-		case WM_KEYUP:
-		case WM_SYSKEYUP:
-			updown = 0;
-			break;
-
-		default:
-			break;
-	}
 
 	play(code, updown);
 
