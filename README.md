@@ -29,9 +29,11 @@ $ ./buckle
 
 ### Windows
 
-To run bucklespring on windows, first install OpenAL from the official package
-at https://www.openal.org/downloads/. The binary can be cross-compiled from linux
-using the mingw compiler:
+For windows the binary is provided in `buckle.exe`. To run on windows,
+make sure to first install OpenAL from the official package at
+https://www.openal.org/downloads/. 
+
+The source can be cross-compiled from linux using the mingw compiler:
 
 ````
 $ make mingw=1
