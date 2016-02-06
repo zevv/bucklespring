@@ -140,7 +140,8 @@ static void usage(char *exe)
 	fprintf(stderr, 
 		"usage: %s [options]\n"
 		"\n"
-		"valid options:\n"
+		"options:\n"
+		"\n"
 		"  -d DEVICE use OpenAL audio device DEVICE\n"
 		"  -g GAIN   set playback gane [0..100]\n"
 		"  -h        show help\n"

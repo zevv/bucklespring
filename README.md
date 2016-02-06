@@ -46,7 +46,8 @@ Usage
 ````
 usage: ./buckle [options]
 
-valid options:
+options:
+
   -d DEVICE use OpenAL audio device DEVICE
   -g GAIN   set playback gane [0..100]
   -h        show help
