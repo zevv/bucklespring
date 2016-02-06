@@ -16,12 +16,27 @@ palette of pure nostalgic bliss.
 Installation
 ------------
 
+### Linux
+
+To compile on debian-based linux distributions, first make sure the require
+libraries and header files are installed, then simply run `make`:
+
 ````
 $ sudo apt-get install libopenal-dev libalut-dev libxtst-dev
 $ make
 $ ./buckle
 ````
 
+### Windows
+
+To run bucklespring on windows, first install OpenAL from the official package
+at https://www.openal.org/downloads/. The binary can be cross-compiled from linux
+using the mingw compiler:
+
+````
+$ make mingw=1
+$ buckle.exe
+````
 
 Usage
 -----

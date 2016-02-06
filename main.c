@@ -9,11 +9,11 @@
 #include <limits.h>
 #include <stdbool.h>
 
-#include <X11/XKBlib.h>
-#include <X11/extensions/record.h>
 
 #include <AL/al.h>
 #include <AL/alut.h>
+
+#include "buckle.h"
 
 #define SRC_INVALID INT_MAX
 
@@ -28,10 +28,7 @@
 static void usage(char *exe);
 static void list_devices(void);
 static double find_key_loc(int code);
-static int play(int code, int press);
-static void printd(const char *fmt, ...);
-static int monitor_keys(void);
-void key_pressed_cb(XPointer arg, XRecordInterceptData *d);
+
 
 
 /* 
@@ -126,7 +123,7 @@ int main(int argc, char **argv)
 	alListener3f(AL_VELOCITY, 0, 0, 0);
 	alListenerfv(AL_ORIENTATION, listenerOri);
 
-	monitor_keys();
+	scan();
 
 out:
 	device = alcGetContextsDevice(context);
@@ -135,51 +132,6 @@ out:
 	if(device) alcCloseDevice(device);
 
 	return rv;
-}
-
-
-static int monitor_keys(void)
-{
-	/* Initialize and start Xrecord context */
-	
-	XRecordRange* rr;
-	XRecordClientSpec rcs;
-	XRecordContext rc;
-
-	printd("Opening Xrecord context");
-
-	Display *dpy = XOpenDisplay(NULL);
-	if(dpy == NULL) {
-		fprintf(stderr, "Unable to open display\n");
-		return -1;
-	}
-    
-	rr = XRecordAllocRange ();
-	if(rr == NULL) {
-		fprintf(stderr, "XRecordAllocRange error\n");
-		return -1;
-	}
-
-	rr->device_events.first = KeyPress;
-	rr->device_events.last = KeyRelease;
-	rcs = XRecordAllClients;
-
-	rc = XRecordCreateContext (dpy, 0, &rcs, 1, &rr, 1);
-	if(rc == 0) {
-		fprintf(stderr, "XRecordCreateContext error\n");
-		return -1;
-	}
-
-	XFree (rr);
-
-	if(XRecordEnableContext(dpy, rc, key_pressed_cb, NULL) == 0) {
-		fprintf(stderr, "XRecordEnableContext error\n");
-		return -1;
-	}
-
-	/* We never get here */
-
-	return 0;
 }
 
 
@@ -217,7 +169,7 @@ static void list_devices(void)
 }
 
 
-static void printd(const char *fmt, ...)
+void printd(const char *fmt, ...)
 {
 	if(opt_verbose) {
 		
@@ -260,12 +212,12 @@ static double find_key_loc(int code)
  * Play audio file for given keycode. Wav files are loaded on demand
  */
 
-static int play(int code, int press)
+int play(int code, int press)
 {
 	ALCenum error;
-	
-	code -= 8; /* X code to scan code? */
 
+	printd("scancode %d/0x%x", code, code);
+	
 	static ALuint buf[512] = { 0 };
 	static ALuint src[512] = { 0 };
 
@@ -296,6 +248,7 @@ static int play(int code, int press)
 		TEST_ERROR("buffer binding");
 	}
 
+
 	if(src[idx] != 0 && src[idx] != SRC_INVALID) {
 		alSourcePlay(src[idx]);
 		TEST_ERROR("source playing");
@@ -304,36 +257,6 @@ static int play(int code, int press)
 	return 0;
 }
 
-
-/*
- * Xrecord event callback
- */
-
-void key_pressed_cb(XPointer arg, XRecordInterceptData *d) 
-{
-	if (d->category != XRecordFromServer)
-		return;
-    
-	int key = ((unsigned char*) d->data)[1];
-	int type = ((unsigned char*) d->data)[0] & 0x7F;
-	int repeat = d->data[2] & 1;
-
-	if(!repeat) {
-
-		switch (type) {
-			case KeyPress:
-				play(key, 1);
-				break;
-			case KeyRelease:
-				play(key, 0);
-				break;
-			default:
-				break;
-		}
-	}
-
-	XRecordFreeData (d);
-}
 
 
 /*
