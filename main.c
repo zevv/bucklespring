@@ -11,7 +11,7 @@
 
 
 #include <AL/al.h>
-#include <AL/alut.h>
+#include <AL/alure.h>
 
 #include "buckle.h"
 
@@ -99,8 +99,6 @@ int main(int argc, char **argv)
 	ALCcontext *context = NULL;
 	ALfloat listenerOri[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
 	ALCenum error;
-
-	alutInitWithoutContext(0, NULL);
 
 	if (!opt_device) {
 		opt_device = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
@@ -234,9 +232,9 @@ int play(int code, int press)
 
 		printd("Loading audio file \"%s\"", fname);
 
-		buf[idx] = alutCreateBufferFromFile(fname);
+		buf[idx] = alureCreateBufferFromFile(fname);
 		if(buf[idx] == 0) {
-			fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alutGetErrorString (alutGetError ()));
+			fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alureGetErrorString());
 			src[idx] = SRC_INVALID;
 			return -1;
 		}

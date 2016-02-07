@@ -9,19 +9,19 @@ LDFLAGS += -g
 ifdef mingw
  BIN     := $(NAME).exe
  CROSS   := i686-w64-mingw32-
- CFLAGS  += -Iwin32/include
- CFLAGS  += -Ifreealut-1.1.0/include
+ CFLAGS  += -Iwin32/include -Iwin32/include/AL
  LDFLAGS += -mwindows
- LIBS    += -Lwin32/lib -lalut -lOpenAL32 
+ CFLAGS  += -DALURE_STATIC_LIBRARY
+ LIBS    += -Lwin32/lib -lALURE32-static -lOpenAL32 
 else
  BIN     := $(NAME)
- LDFLAGS += $(shell pkg-config --libs openal freealut xtst x11)
- CFLAGS  += $(shell pkg-config --cflags openal freealut xtst x11)
+ LDFLAGS += $(shell pkg-config --libs openal alure xtst x11)
+ CFLAGS  += $(shell pkg-config --cflags openal alure xtst x11)
 endif
 
 OBJS    = $(subst .c,.o, $(SRC))
 CC 	= $(CROSS)gcc
-LD 	= $(CROSS)gcc
+LD 	= $(CROSS)g++
 STRIP 	= $(CROSS)strip
 
 %.o: %.c
