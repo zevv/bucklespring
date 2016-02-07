@@ -22,7 +22,7 @@ To compile on debian-based linux distributions, first make sure the require
 libraries and header files are installed, then simply run `make`:
 
 ````
-$ sudo apt-get install libopenal-dev libalut-dev libxtst-dev
+$ sudo apt-get install libopenal-dev libalure-dev libxtst-dev
 $ make
 $ ./buckle
 ````
