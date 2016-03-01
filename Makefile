@@ -10,7 +10,7 @@ ifdef mingw
  BIN     := $(NAME).exe
  CROSS   := i686-w64-mingw32-
  CFLAGS  += -Iwin32/include -Iwin32/include/AL
- LDFLAGS += -mwindows
+ LDFLAGS += -mwindows -static-libgcc -static-libstdc++
  CFLAGS  += -DALURE_STATIC_LIBRARY
  LIBS    += -Lwin32/lib -lALURE32-static -lOpenAL32 
 else
