@@ -33,14 +33,14 @@ For windows the binary is provided in `buckle.exe`. To run on windows,
 make sure to first install OpenAL from the official package at
 https://www.openal.org/downloads/. 
 
-The source can be cross-compiled from linux using the mingw compiler:
+The source can be cross-compiled from linux using the MinGW compiler:
 
 ````
 $ make mingw=1
 $ buckle.exe
 ````
 
-The program is launched in the background, and has no userinterface whatsoever.
+The program is launched in the background, and has no user interface whatsoever.
 To terminate, find 'buckle.exe' in the task manager and kill. Any volunteers
 for implementing a systray icon?
 
@@ -53,7 +53,7 @@ usage: ./buckle [options]
 options:
 
   -d DEVICE use OpenAL audio device DEVICE
-  -g GAIN   set playback gane [0..100]
+  -g GAIN   set playback gain [0..100]
   -h        show help
   -l        list available openAL audio devices
   -p PATH   load .wav files from directory PATH
