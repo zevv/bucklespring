@@ -28,7 +28,7 @@ STRIP 	= $(CROSS)strip
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BIN):	$(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+	$(LD) -o $@ $(OBJS) $(LIBS) $(LDFLAGS) 
 
 rec: rec.c
 	gcc -Wall -Werror rec.c -o rec
