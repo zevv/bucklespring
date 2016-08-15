@@ -29,6 +29,9 @@ $ ./buckle
 
 ### Windows
 
+(The windows build is currently broken, it seems that switching from freelut to
+alure broke windows, I might fix this one day...)
+
 For windows the binary is provided in `buckle.exe`. To run on windows,
 make sure to first install OpenAL from the official package at
 https://www.openal.org/downloads/. 
