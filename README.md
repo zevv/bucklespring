@@ -40,7 +40,7 @@ $ make mingw=1
 $ buckle.exe
 ````
 
-The program is launched in the background, and has no userinterface whatsoever.
+The program is launched in the background, and has no user interface whatsoever.
 To terminate, find 'buckle.exe' in the task manager and kill. Any volunteers
 for implementing a systray icon?
 
