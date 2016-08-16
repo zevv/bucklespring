@@ -27,6 +27,20 @@ $ make
 $ ./buckle
 ````
 
+### MacOS
+
+I've heard rumours that bucklespring also runs on MacOS. I've been told that
+the following should do:
+
+```
+$ brew install alure
+$ make
+```
+
+Please let me know if this works for you, because I'm not able to test this
+myself due to lack of hardware.
+
+
 ### Windows
 
 (The windows build is currently broken, it seems that switching from freelut to
