@@ -1,0 +1,6 @@
+Name: OpenAL
+Description: OpenAL is a cross-platform 3D audio API
+Requires: 
+Version: 1.17.2
+Libs: 
+Cflags: 
