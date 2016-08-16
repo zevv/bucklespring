@@ -37,6 +37,11 @@ $ brew install alure
 $ make
 ```
 
+I was also told the following: "You need superuser privileges to create the
+event tap, unless accessibility is enabled. To do so, select the "Enable access
+for assistive devices" checkbox in the Universal Access system preference
+pane."
+
 Please let me know if this works for you, because I'm not able to test this
 myself due to lack of hardware.
 
