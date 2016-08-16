@@ -48,23 +48,14 @@ myself due to lack of hardware.
 
 ### Windows
 
-(The windows build is currently broken, it seems that switching from freelut to
-alure broke windows, I might fix this one day...)
+The windows build is currently broken, it seems that switching from Freelut to
+Alure broke windows, I might fix this one day. 
 
-For windows the binary is provided in `buckle.exe`. To run on windows,
-make sure to first install OpenAL from the official package at
-https://www.openal.org/downloads/. 
+I suspect there is something wrong with `alureCreateBufferFromFile()` getting
+called from another thread, but my knowledge of the win32 platform is so poor
+I'm not even able to run a debugger to see what is happening. Help from an
+expert is appreciated.
 
-The source can be cross-compiled from linux using the MinGW compiler:
-
-````
-$ make mingw=1
-$ buckle.exe
-````
-
-The program is launched in the background, and has no user interface whatsoever.
-To terminate, find 'buckle.exe' in the task manager and kill. Any volunteers
-for implementing a systray icon?
 
 Usage
 -----
