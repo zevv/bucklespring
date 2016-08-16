@@ -33,7 +33,7 @@ I've heard rumours that bucklespring also runs on MacOS. I've been told that
 the following should do:
 
 ```
-$ brew install alure
+$ brew install alure pkg-config
 $ make
 ```
 
