@@ -35,26 +35,21 @@ the following should do:
 ```
 $ brew install alure pkg-config
 $ make
+$ sudo ./buckle
 ```
 
-I was also told the following: "You need superuser privileges to create the
-event tap, unless accessibility is enabled. To do so, select the "Enable access
-for assistive devices" checkbox in the Universal Access system preference
-pane."
-
-Please let me know if this works for you, because I'm not able to test this
-myself due to lack of hardware.
+Note that you need superuser privileges to create the event tap on Mac OS X.
 
 
 ### Windows
 
-The windows build is currently broken, it seems that switching from Freelut to
-Alure broke windows, I might fix this one day. 
+I think the windows build is currently broken, it seems that switching from
+Freelut to Alure broke windows, I might fix this one day. 
 
 I suspect there is something wrong with `alureCreateBufferFromFile()` getting
-called from another thread, but my knowledge of the win32 platform is so poor
-I'm not even able to run a debugger to see what is happening. Help from an
-expert is appreciated.
+called from another thread in the key capture callback, but my knowledge of the
+win32 platform is so poor I'm not even able to run a debugger to see what is
+happening. Help from an expert is much appreciated.
 
 
 Usage
