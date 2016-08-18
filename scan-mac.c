@@ -157,7 +157,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 	int mackeycode = (int)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
 	printd("Mac keycode: %d", mackeycode);
 
-	if (mackeycode > sizeof(mactoset1)/sizeof(mactoset1[0]))
+	if (mackeycode >= sizeof(mactoset1)/sizeof(mactoset1[0]))
 		return event;
 
 	int key = mactoset1[mackeycode];
