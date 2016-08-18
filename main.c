@@ -55,6 +55,7 @@ static int keyloc[][32] = {
 static int opt_verbose = 0;
 static int opt_stereo_width = 50;
 static int opt_gain = 100;
+static int opt_fallback_sound = 0;
 static const char *opt_device = NULL;
 static const char *opt_path_audio = "./wav";
 
@@ -64,10 +65,13 @@ int main(int argc, char **argv)
 	int c;
 	int rv = EXIT_SUCCESS;
 
-	while( (c = getopt(argc, argv, "hvd:g:lp:s:")) != EOF) {
+	while( (c = getopt(argc, argv, "fhvd:g:lp:s:")) != EOF) {
 		switch(c) {
 			case 'd':
 				opt_device = optarg;
+				break;
+			case 'f':
+				opt_fallback_sound = 1;
 				break;
 			case 'g':
 				opt_gain = atoi(optarg);
@@ -149,6 +153,7 @@ static void usage(char *exe)
 		"options:\n"
 		"\n"
 		"  -d DEVICE use OpenAL audio device DEVICE\n"
+		"  -f        use a fallback sound for unknown keys\n"
 		"  -g GAIN   set playback gane [0..100]\n"
 		"  -h        show help\n"
 		"  -l        list available openAL audio devices\n"
@@ -239,9 +244,18 @@ int play(int code, int press)
 
 		buf[idx] = alureCreateBufferFromFile(fname);
 		if(buf[idx] == 0) {
-			fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alureGetErrorString());
-			src[idx] = SRC_INVALID;
-			return -1;
+
+			if(opt_fallback_sound) {
+				snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, 0x31, press);
+				buf[idx] = alureCreateBufferFromFile(fname);
+			} else {
+				fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alureGetErrorString());
+			}
+
+			if(buf[idx] == 0) {
+				src[idx] = SRC_INVALID;
+				return -1;
+			}
 		}
 	
 		alGenSources((ALuint)1, &src[idx]);
