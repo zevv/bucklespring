@@ -72,19 +72,35 @@ options:
 OpenAL notes
 ------------
 
+
 Bucklespring uses the OpenAL library for mixing samples and providing a
-realistic 3D audio playback. The default OpenAL settings can cause a slight
-delay in playback. Edit or create the OpenAL configuration file `~/.alsoftrc`
-and add the following options:
+realistic 3D audio playback. This section contains some tips and tricks for
+properly tuning OpenAL for bucklespring.
 
-````
-period_size = 32
-periods = 4
-````
+* The default OpenAL settings can cause a slight delay in playback. Edit or create 
+  the OpenAL configuration file `~/.alsoftrc` and add the following options:
 
-If you are using headphones, enabling the head-related-transfer functions in
-OpenAL for a better 3D sound:
+ ````
+ period_size = 32
+ periods = 4
+ ````
 
-````
-hrtf = true
-````
+* If you are using headphones, enabling the head-related-transfer functions in OpenAL 
+  for a better 3D sound:
+
+ ````
+ hrtf = true
+ ````
+ 
+* When starting an OpenAL application, the internal sound card is selected for output, 
+  and you might not be able to change the device using pavucontrol. The option to select 
+  an alternate device is present, but choosing the device has no effect. To solve this, 
+  add the following option to the OpenAL configuration file:
+ 
+ ````
+ allow-moves = true
+ ````
+ 
+ 
+ 
+
