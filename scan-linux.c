@@ -1,5 +1,5 @@
 
-#ifdef linux
+#if defined(linux) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__NetBSD__)
 
 #include <stdio.h>
 
