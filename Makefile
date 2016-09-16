@@ -1,5 +1,5 @@
 
-VERSION	:= 1.3.3
+VERSION	:= 1.3.6
 NAME   	:= buckle
 SRC 	:= main.c scan-linux.c scan-windows.c scan-mac.c
 
@@ -43,6 +43,12 @@ STRIP 	= $(CROSS)strip
 
 $(BIN):	$(OBJS)
 	$(LD) -o $@ $(OBJS) $(LIBS) $(LDFLAGS) 
+
+dist:
+	mkdir -p $(NAME)-$(VERSION)
+	cp -a *.c *.h wav Makefile LICENSE $(NAME)-$(VERSION)
+	tar -zcf /tmp/$(NAME)-$(VERSION).tgz $(NAME)-$(VERSION)
+	rm -rf $(NAME)-$(VERSION)
 
 rec: rec.c
 	gcc -Wall -Werror rec.c -o rec
