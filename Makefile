@@ -7,6 +7,10 @@ CFLAGS  += -Wall -Werror -DVERSION=\"$(VERSION)\"
 CFLAGS	+= -O3 -g
 LDFLAGS += -g
 
+ifdef OPT_PATH_AUDIO
+ CFLAGS += -D'OPT_PATH_AUDIO=$(OPT_PATH_AUDIO)'
+endif
+
 ifdef mingw
  BIN     := $(NAME).exe
  CROSS   := i686-w64-mingw32-
