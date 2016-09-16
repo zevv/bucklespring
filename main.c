@@ -29,6 +29,9 @@
 		exit(1);		\
 	}
 
+#ifndef OPT_PATH_AUDIO
+#define OPT_PATH_AUDIO "./wav"
+#endif
 
 static void usage(char *exe);
 static void list_devices(void);
@@ -57,7 +60,7 @@ static int opt_stereo_width = 50;
 static int opt_gain = 100;
 static int opt_fallback_sound = 0;
 static const char *opt_device = NULL;
-static const char *opt_path_audio = "./wav";
+static const char *opt_path_audio = OPT_PATH_AUDIO;
 
 
 int main(int argc, char **argv)
