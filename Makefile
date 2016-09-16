@@ -1,8 +1,9 @@
 
-NAME   	= buckle
-SRC 	= main.c scan-linux.c scan-windows.c scan-mac.c
+VERSION	:= 1.3.3
+NAME   	:= buckle
+SRC 	:= main.c scan-linux.c scan-windows.c scan-mac.c
 
-CFLAGS  += -Wall -Werror
+CFLAGS  += -Wall -Werror -DVERSION=\"$(VERSION)\"
 CFLAGS	+= -O3 -g
 LDFLAGS += -g
 
