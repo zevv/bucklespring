@@ -155,7 +155,7 @@ static void usage(char *exe)
 		"\n"
 		"  -d DEVICE use OpenAL audio device DEVICE\n"
 		"  -f        use a fallback sound for unknown keys\n"
-		"  -g GAIN   set playback gane [0..100]\n"
+		"  -g GAIN   set playback gain [0..100]\n"
 		"  -h        show help\n"
 		"  -l        list available openAL audio devices\n"
 		"  -p PATH   load .wav files from directory PATH\n"
