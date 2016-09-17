@@ -1,7 +1,7 @@
 
 NAME   	:= buckle
 SRC 	:= main.c scan-linux.c scan-windows.c scan-mac.c
-VERSION	:= $(shell git describe | cut -d - -f 1)
+VERSION	:= 1.3.6
 
 PATH_AUDIO ?= "./wav"
 
