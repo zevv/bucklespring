@@ -35,7 +35,7 @@ endif
 
 OBJS    = $(subst .c,.o, $(SRC))
 CC 	= $(CROSS)gcc
-LD 	= $(CROSS)g++
+LD 	= $(CROSS)gcc
 STRIP 	= $(CROSS)strip
 
 %.o: %.c
