@@ -5,6 +5,7 @@ VERSION	:= 1.3.6
 
 PATH_AUDIO ?= "./wav"
 
+CFLAGS  += $(CPPFLAGS)
 CFLAGS  += -Wall -Werror 
 CFLAGS  += -DVERSION=\"$(VERSION)\"
 CFLAGS  += -DPATH_AUDIO=\"$(PATH_AUDIO)\"
