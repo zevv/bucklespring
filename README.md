@@ -68,6 +68,7 @@ options:
   -g GAIN   set playback gain [0..100]
   -h        show help
   -l        list available openAL audio devices
+  -n        disable "mute on twice ScrollLock" mode
   -p PATH   load .wav files from directory PATH
   -s WIDTH  set stereo width [0..100]
   -v        increase verbosity / debugging

@@ -56,6 +56,7 @@ static int opt_verbose = 0;
 static int opt_stereo_width = 50;
 static int opt_gain = 100;
 static int opt_fallback_sound = 0;
+static int opt_nomute = 0;
 static const char *opt_device = NULL;
 static const char *opt_path_audio = PATH_AUDIO;
 
@@ -82,6 +83,9 @@ int main(int argc, char **argv)
 			case 'l':
 				list_devices();
 				return 0;
+			case 'n':
+				opt_nomute = 1;
+				break;
 			case 'v':
 				opt_verbose++;
 				break;
@@ -295,7 +299,7 @@ int play(int code, int press)
 
 
 	if(src[idx] != 0 && src[idx] != SRC_INVALID) {
-		if (!silenced)
+		if (!silenced || opt_nomute)
 			alSourcePlay(src[idx]);
 		TEST_ERROR("source playing");
 	}
