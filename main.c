@@ -56,6 +56,7 @@ static int opt_verbose = 0;
 static int opt_stereo_width = 50;
 static int opt_gain = 100;
 static int opt_fallback_sound = 0;
+static int opt_nomute = 0;
 static const char *opt_device = NULL;
 static const char *opt_path_audio = PATH_AUDIO;
 
@@ -82,6 +83,9 @@ int main(int argc, char **argv)
 			case 'l':
 				list_devices();
 				return 0;
+			case 'n':
+				opt_nomute = 1;
+				break;
 			case 'v':
 				opt_verbose++;
 				break;
@@ -222,6 +226,13 @@ static double find_key_loc(int code)
 
 
 /*
+ * To silence play temporarily, press ScrollLock twice, same to unmute
+ */
+
+static int silenced = 0;
+static int silence_count = 0;
+
+/*
  * Play audio file for given keycode. Wav files are loaded on demand
  */
 
@@ -230,7 +241,23 @@ int play(int code, int press)
 	ALCenum error;
 
 	printd("scancode %d/0x%x", code, code);
-	
+
+	/* Check for silencing sequence: ScrollLock down+up+down */
+	if (code == 0x46) {
+		if (press == 0) {
+			if (silence_count == 1)
+				silence_count = 2;
+			else
+				silence_count = 0;
+		} else {
+			if (silence_count == 2)
+				silenced = !silenced;
+			else
+				silence_count = 1;
+		}
+	} else
+		silence_count = 0;
+
 	static ALuint buf[512] = { 0 };
 	static ALuint src[512] = { 0 };
 
@@ -272,7 +299,8 @@ int play(int code, int press)
 
 
 	if(src[idx] != 0 && src[idx] != SRC_INVALID) {
-		alSourcePlay(src[idx]);
+		if (!silenced || opt_nomute)
+			alSourcePlay(src[idx]);
 		TEST_ERROR("source playing");
 	}
 
@@ -284,4 +312,3 @@ int play(int code, int press)
 /*
  * End
  */
-
