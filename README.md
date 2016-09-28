@@ -13,6 +13,10 @@ Model-M. The sound of each key has carefully been sampled, and is played back
 while simulating the proper distance and direction for a realistic 3D sound
 palette of pure nostalgic bliss.
 
+To temporarily silence bucklespring, for example to enter secrets, press
+ScrollLock twice (but be aware that those ScrollLock events _are_ delivered
+to the application); same to unmute.
+
 Installation
 ------------
 
@@ -100,7 +104,3 @@ properly tuning OpenAL for bucklespring.
  ````
  allow-moves = true
  ````
- 
- 
- 
-
