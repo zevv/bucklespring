@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <time.h>
 
 
 #ifdef __APPLE__
@@ -51,6 +52,8 @@ static int keyloc[][32] = {
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x69, 0x6c, 0x6a, -1 },
 };
 
+static time_t tm_silence_first = 0;
+static time_t tm_silence_diff = 0;
 
 static int opt_verbose = 0;
 static int opt_stereo_width = 50;
@@ -245,12 +248,15 @@ int play(int code, int press)
 	/* Check for silencing sequence: ScrollLock down+up+down */
 	if (code == 0x46) {
 		if (press == 0) {
-			if (silence_count == 1)
+			if (silence_count == 1) {
 				silence_count = 2;
-			else
+				tm_silence_first = time(NULL);
+				tm_silence_diff = tm_silence_first;
+			} else
 				silence_count = 0;
 		} else {
-			if (silence_count == 2)
+			tm_silence_diff = time(NULL) - tm_silence_first;
+			if (silence_count == 2 && tm_silence_diff <= 1)
 				silenced = !silenced;
 			else
 				silence_count = 1;
