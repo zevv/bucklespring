@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <time.h>
 
 
 #ifdef __APPLE__
@@ -21,6 +22,7 @@
 #include "buckle.h"
 
 #define SRC_INVALID INT_MAX
+#define DEFAULT_MUTE_KEYCODE 0x46 /* Scroll Lock */
 
 #define TEST_ERROR(_msg)		\
 	error = alGetError();		\
@@ -56,9 +58,10 @@ static int opt_verbose = 0;
 static int opt_stereo_width = 50;
 static int opt_gain = 100;
 static int opt_fallback_sound = 0;
-static int opt_nomute = 0;
+static int opt_mute_keycode = DEFAULT_MUTE_KEYCODE;
 static const char *opt_device = NULL;
 static const char *opt_path_audio = PATH_AUDIO;
+static int muted = 0;
 
 
 int main(int argc, char **argv)
@@ -66,7 +69,7 @@ int main(int argc, char **argv)
 	int c;
 	int rv = EXIT_SUCCESS;
 
-	while( (c = getopt(argc, argv, "fhvd:g:lp:s:")) != EOF) {
+	while( (c = getopt(argc, argv, "fhm:vd:g:lp:s:")) != EOF) {
 		switch(c) {
 			case 'd':
 				opt_device = optarg;
@@ -83,8 +86,9 @@ int main(int argc, char **argv)
 			case 'l':
 				list_devices();
 				return 0;
-			case 'n':
-				opt_nomute = 1;
+			case 'm':
+				opt_mute_keycode = strtol(optarg, NULL, 0);
+				printf("%d\n", opt_mute_keycode);
 				break;
 			case 'v':
 				opt_verbose++;
@@ -160,6 +164,7 @@ static void usage(char *exe)
 		"  -d DEVICE use OpenAL audio device DEVICE\n"
 		"  -f        use a fallback sound for unknown keys\n"
 		"  -g GAIN   set playback gain [0..100]\n"
+		"  -m CODE   use CODE as mute key (default 0x46 for scroll lock)\n"
 		"  -h        show help\n"
 		"  -l        list available openAL audio devices\n"
 		"  -p PATH   load .wav files from directory PATH\n"
@@ -226,11 +231,34 @@ static double find_key_loc(int code)
 
 
 /*
- * To silence play temporarily, press ScrollLock twice, same to unmute
+ * To silence play temporarily, press mute key (default ScrollLock) within 2
+ * seconds, same to unmute
  */
 
-static int silenced = 0;
-static int silence_count = 0;
+
+static void handle_mute_key(int mute_key)
+{
+	static time_t t_prev;
+	static int count = 0;
+
+	if(mute_key) {
+		time_t t_now = time(NULL);
+		if(t_now - t_prev < 2) {
+			count ++;
+			if(count == 2) {
+				muted = !muted;
+				printd("Mute %s", muted ? "enabled" : "disabled");
+				count = 0;
+			}
+		} else {
+			count = 1;
+		}
+		t_prev = t_now;
+	} else {
+		count = 0;
+	}
+}
+
 
 /*
  * Play audio file for given keycode. Wav files are loaded on demand
@@ -242,21 +270,11 @@ int play(int code, int press)
 
 	printd("scancode %d/0x%x", code, code);
 
-	/* Check for silencing sequence: ScrollLock down+up+down */
-	if (code == 0x46) {
-		if (press == 0) {
-			if (silence_count == 1)
-				silence_count = 2;
-			else
-				silence_count = 0;
-		} else {
-			if (silence_count == 2)
-				silenced = !silenced;
-			else
-				silence_count = 1;
-		}
-	} else
-		silence_count = 0;
+	/* Check for mute sequence: ScrollLock down+up+down */
+
+	if (press) {
+		handle_mute_key(code == opt_mute_keycode);
+	}
 
 	static ALuint buf[512] = { 0 };
 	static ALuint src[512] = { 0 };
@@ -299,7 +317,7 @@ int play(int code, int press)
 
 
 	if(src[idx] != 0 && src[idx] != SRC_INVALID) {
-		if (!silenced || opt_nomute)
+		if (!muted)
 			alSourcePlay(src[idx]);
 		TEST_ERROR("source playing");
 	}
