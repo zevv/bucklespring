@@ -14,8 +14,9 @@ while simulating the proper distance and direction for a realistic 3D sound
 palette of pure nostalgic bliss.
 
 To temporarily silence bucklespring, for example to enter secrets, press
-ScrollLock twice (but be aware that those ScrollLock events _are_ delivered
-to the application); same to unmute.
+ScrollLock twice (but be aware that those ScrollLock events _are_ delivered to
+the application); same to unmute. The keycode for muting can be changed with
+the `-m` option. Use keycode 0 to disable the mute function.
 
 Installation
 ------------
@@ -68,7 +69,7 @@ options:
   -g GAIN   set playback gain [0..100]
   -h        show help
   -l        list available openAL audio devices
-  -n        disable "mute on twice ScrollLock" mode
+  -m CODE   use CODE as mute key (default 0x46 for scroll lock)
   -p PATH   load .wav files from directory PATH
   -s WIDTH  set stereo width [0..100]
   -v        increase verbosity / debugging
