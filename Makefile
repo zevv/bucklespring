@@ -1,7 +1,7 @@
 
 NAME   	:= buckle
 SRC 	:= main.c scan-linux.c scan-windows.c scan-mac.c
-VERSION	:= 1.3.6
+VERSION	:= 1.4.0
 
 PATH_AUDIO ?= "./wav"
 
