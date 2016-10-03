@@ -1,6 +1,8 @@
 Nostalgia bucklespring keyboard sound
 =====================================
 
+Copyright 2016 Ico Doornekamp
+
 This project emulates the sound of my old faithful IBM Model-M space saver
 bucklespring keyboard while typing on my notebook, mainly for the purpose of
 annoying the hell out of my coworkers.
