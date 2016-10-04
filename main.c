@@ -88,7 +88,6 @@ int main(int argc, char **argv)
 				return 0;
 			case 'm':
 				opt_mute_keycode = strtol(optarg, NULL, 0);
-				printf("%d\n", opt_mute_keycode);
 				break;
 			case 'v':
 				opt_verbose++;
