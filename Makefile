@@ -34,15 +34,16 @@ else
 endif
 
 OBJS    = $(subst .c,.o, $(SRC))
-CC 	:= $(CROSS)gcc
-LD 	:= $(CROSS)gcc
+CC 	?= $(CROSS)gcc
+LD 	?= $(CROSS)gcc
+CCLD 	?= $(CC)
 STRIP 	= $(CROSS)strip
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BIN):	$(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+	$(CCLD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 dist:
 	mkdir -p $(NAME)-$(VERSION)
