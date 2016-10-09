@@ -5,12 +5,11 @@ VERSION	:= 1.4.0
 
 PATH_AUDIO ?= "./wav"
 
-CFLAGS  += $(CPPFLAGS)
+CFLAGS	?= -O3 -g
+LDFLAGS ?= -g
 CFLAGS  += -Wall -Werror 
 CFLAGS  += -DVERSION=\"$(VERSION)\"
 CFLAGS  += -DPATH_AUDIO=\"$(PATH_AUDIO)\"
-CFLAGS	+= -O3 -g
-LDFLAGS += -g
 
 ifdef mingw
  BIN     := $(NAME).exe
@@ -24,26 +23,26 @@ else
  ifeq ($(OS), Darwin)
   BIN     := $(NAME)
   PKG_CONFIG_PATH := "./mac/lib/pkgconfig" 
-  LDFLAGS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs alure openal)
+  LIBS    += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs alure openal)
   CFLAGS  += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags alure openal)
-  LDFLAGS  += -framework ApplicationServices -framework OpenAL
+  LDFLAGS += -framework ApplicationServices -framework OpenAL
  else
   BIN     := $(NAME)
-  LDFLAGS += $(shell pkg-config --libs openal alure xtst x11)
+  LIBS    += $(shell pkg-config --libs openal alure xtst x11)
   CFLAGS  += $(shell pkg-config --cflags openal alure xtst x11)
  endif
 endif
 
 OBJS    = $(subst .c,.o, $(SRC))
-CC 	= $(CROSS)gcc
-LD 	= $(CROSS)gcc
+CC 	?= $(CROSS)gcc
+LD 	?= $(CROSS)gcc
 STRIP 	= $(CROSS)strip
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BIN):	$(OBJS)
-	$(LD) -o $@ $(OBJS) $(LIBS) $(LDFLAGS) 
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 dist:
 	mkdir -p $(NAME)-$(VERSION)
