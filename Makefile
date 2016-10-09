@@ -34,8 +34,8 @@ else
 endif
 
 OBJS    = $(subst .c,.o, $(SRC))
-CC 	?= $(CROSS)gcc
-LD 	?= $(CROSS)gcc
+CC 	:= $(CROSS)gcc
+LD 	:= $(CROSS)gcc
 STRIP 	= $(CROSS)strip
 
 %.o: %.c
