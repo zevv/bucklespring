@@ -14,11 +14,12 @@ description: |
   bliss.
 
 grade: stable
-confinement: devmode
+confinement: strict
 
 apps:
   buckle:
-    command: buckle -f
+    command: buckle
+    plugs: [x11, pulseaudio]
 
 parts:
   deps:
