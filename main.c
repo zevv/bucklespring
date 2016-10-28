@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <libgen.h>
 #include <unistd.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -115,6 +116,20 @@ int main(int argc, char **argv)
 	ALCcontext *context = NULL;
 	ALfloat listenerOri[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
 	ALCenum error;
+	char currentPath[1024];
+
+	if (strcmp(opt_path_audio, PATH_AUDIO) == 0) {
+		char *thisPath = dirname(argv[0]);
+
+		if (strcmp(thisPath, ".") != 0) {
+			int ret = snprintf(currentPath, sizeof(currentPath), "%s/" PATH_AUDIO, thisPath);
+
+			if (ret > 0) {
+				opt_path_audio = currentPath;
+				printd("Using wav dir: \"%s\"\n", opt_path_audio);
+			}
+		}
+	}
 
 	if (!opt_device) {
 		opt_device = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
@@ -135,7 +150,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	TEST_ERROR("make default context");
-		
+
 	alListener3f(AL_POSITION, 0, 0, 0);
 	alListener3f(AL_VELOCITY, 0, 0, 0);
 	alListenerfv(AL_ORIENTATION, listenerOri);
