@@ -18,7 +18,7 @@ confinement: strict
 
 apps:
   buckle:
-    command: buckle
+    command: buckle-snap.run
     plugs: [x11, pulseaudio]
 
 parts:
@@ -32,11 +32,20 @@ parts:
       - libmpg123-0
       - libsndfile1
       - libvorbisfile3
+
   buckle:
-    source: .
     plugin: make
+    source: .
     build-packages:
       - libopenal-dev
       - libalure-dev
       - libxtst-dev
     artifacts: ['buckle', 'wav']
+
+  launcher:
+    plugin: dump
+    source: .
+    filesets:
+      launcherset: [ buckle-snap.run ]
+    stage: [ $launcherset ]
+    snap: [ $launcherset ]
