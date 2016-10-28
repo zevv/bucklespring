@@ -1,5 +1,6 @@
 name: bucklespring
 version: '1.4.0+git'
+license: LICENSE
 summary: Nostalgia bucklespring keyboard sound
 description: |
   This project emulates the sound of my old faithful IBM Model-M space saver
