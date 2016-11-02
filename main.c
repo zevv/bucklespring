@@ -53,6 +53,18 @@ static int keyloc[][32] = {
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x69, 0x6c, 0x6a, -1 },
 };
 
+/* 
+ * Horizontal position on keyboard of the pragmatic center of the row, since keys come in different sizes and shapes
+ */
+static double midloc[] = {
+	7.5,
+	7.5,
+	7.5,
+	6.5,
+	6.5,
+	6.5,
+	4.5,
+};
 
 static int opt_verbose = 0;
 static int opt_stereo_width = 50;
@@ -222,7 +234,7 @@ static double find_key_loc(int code)
 			if(keyloc[row][col] == -1) break;
 		}
 		if(keycol) {
-			return -1 + 2.0 * (double) (keycol-1) / (col-1);
+			return ((double) keycol-midloc[row])/(col-midloc[row]);
 		}
 	}
 	return 0;
