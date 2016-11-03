@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Bucklespring
+Comment=Nostalgia bucklespring keyboard sound
+Exec=bucklespring.buckle
+Icon=${SNAP}/meta/gui/icon.png
+Categories=Utility
