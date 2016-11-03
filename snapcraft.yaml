@@ -37,6 +37,7 @@ parts:
     plugin: make
     source: .
     build-packages:
+      - pkg-config
       - libopenal-dev
       - libalure-dev
       - libxtst-dev
