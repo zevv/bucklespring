@@ -131,17 +131,24 @@ int main(int argc, char **argv)
 	char currentPath[1024];
 
 	if (strcmp(opt_path_audio, PATH_AUDIO) == 0) {
-		const char *thisPath = dirname(argv[0]);
+		const char *envPath = getenv("BUCKLESPRING_WAV_DIR");
 
-		if (strcmp(thisPath, ".") != 0) {
-			int ret = snprintf(currentPath, sizeof(currentPath), "%s/" PATH_AUDIO, thisPath);
+		if (envPath) {
+			opt_path_audio = envPath;
+		} else {
+			const char *thisPath = dirname(argv[0]);
 
-			if (ret > 0) {
-				opt_path_audio = currentPath;
-				printd("Using wav dir: \"%s\"\n", opt_path_audio);
+			if (strcmp(thisPath, ".") != 0) {
+				int ret = snprintf(currentPath, sizeof(currentPath), "%s/" PATH_AUDIO, thisPath);
+
+				if (ret > 0) {
+					opt_path_audio = currentPath;
+				}
 			}
 		}
 	}
+
+	printd("Using wav dir: \"%s\"\n", opt_path_audio);
 
 	if (!opt_device) {
 		opt_device = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
