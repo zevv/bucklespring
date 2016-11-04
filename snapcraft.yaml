@@ -30,7 +30,6 @@ parts:
       - libfluidsynth1
       - libmodplug1
       - libmpg123-0
-      - libpulse0
       - libsndfile1
       - libvorbisfile3
 
