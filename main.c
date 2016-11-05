@@ -147,10 +147,17 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	TEST_ERROR("make default context");
-		
+
 	alListener3f(AL_POSITION, 0, 0, 0);
 	alListener3f(AL_VELOCITY, 0, 0, 0);
 	alListenerfv(AL_ORIENTATION, listenerOri);
+
+	const char *envPath = getenv("BUCKLESPRING_WAV_DIR");
+	if (envPath) {
+		opt_path_audio = envPath;
+	}
+
+	printd("Using wav dir: \"%s\"\n", opt_path_audio);
 
 	scan();
 
