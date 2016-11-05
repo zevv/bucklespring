@@ -147,10 +147,20 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	TEST_ERROR("make default context");
-		
+
 	alListener3f(AL_POSITION, 0, 0, 0);
 	alListener3f(AL_VELOCITY, 0, 0, 0);
 	alListenerfv(AL_ORIENTATION, listenerOri);
+
+	/* Path to data files can also be be specified by environment, this is
+	 * used by the snap package */
+
+	const char *env_path = getenv("BUCKLESPRING_WAV_DIR");
+	if (env_path) {
+		opt_path_audio = env_path;
+	}
+
+	printd("Using wav dir: \"%s\"\n", opt_path_audio);
 
 	scan();
 
