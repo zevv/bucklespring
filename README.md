@@ -28,11 +28,28 @@ Installation
 To compile on debian-based linux distributions, first make sure the require
 libraries and header files are installed, then simply run `make`:
 
-````
+```
 $ sudo apt-get install libopenal-dev libalure-dev libxtst-dev
 $ make
 $ ./buckle
-````
+```
+
+#### Ubuntu (since 16.04)
+```
+$ sudo snap install bucklespring
+$ bucklespring.buckle
+```
+To run it on startup, use this upstart script (paste this command in a terminal to generate it):
+```
+$ cat > ~/.config/upstart/bucklespring.conf << EOF
+description "Nostalgia bucklespring keyboard sound"
+
+start on desktop-start
+stop on desktop-end
+respawn
+exec bucklespring.buckle #-g 30
+EOF
+```
 
 ### MacOS
 
