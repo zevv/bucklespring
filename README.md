@@ -34,7 +34,7 @@ $ make
 $ ./buckle
 ```
 
-#### Ubuntu (since 16.04)
+#### Ubuntu (since 16.04) and distros supporting [snapd](http://snapcraft.io/)
 ```
 $ sudo snap install bucklespring
 $ bucklespring.buckle
