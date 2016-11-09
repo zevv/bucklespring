@@ -39,6 +39,8 @@ $ ./buckle
 $ sudo snap install bucklespring
 $ bucklespring.buckle
 ```
+The snap includes the OpenAL configuration tweaks mentioned in this README.
+
 To run it on startup, use this upstart script (paste this command in a terminal to generate it):
 ```
 $ cat > ~/.config/upstart/bucklespring.conf << EOF
