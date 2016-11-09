@@ -23,7 +23,16 @@ the `-m` option. Use keycode 0 to disable the mute function.
 Installation
 ------------
 
-### Linux
+### Debian
+
+Bucklespring is available in the latest Debian and Ubuntu dev-releases, so you can
+install with
+
+```
+$ sudo apt-get install bucklespring
+```
+
+### Linux, building from source
 
 To compile on debian-based linux distributions, first make sure the require
 libraries and header files are installed, then simply run `make`:
@@ -34,24 +43,16 @@ $ make
 $ ./buckle
 ```
 
-#### Ubuntu (since 16.04) and distros supporting [snapd](http://snapcraft.io/)
+#### Using snap on Ubuntu (since 16.04) and other distros 
+
 ```
 $ sudo snap install bucklespring
 $ bucklespring.buckle
 ```
+
 The snap includes the OpenAL configuration tweaks mentioned in this README.
+See http://snapcraft.io/ for more info about Snap packages
 
-To run it on startup, use this upstart script (paste this command in a terminal to generate it):
-```
-$ cat > ~/.config/upstart/bucklespring.conf << EOF
-description "Nostalgia bucklespring keyboard sound"
-
-start on desktop-start
-stop on desktop-end
-respawn
-exec bucklespring.buckle #-g 30
-EOF
-```
 
 ### MacOS
 
