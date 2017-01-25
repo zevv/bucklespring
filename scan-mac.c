@@ -1,6 +1,3 @@
-
-#ifdef __APPLE__
-
 #include <ApplicationServices/ApplicationServices.h>
 #include "buckle.h"
 
@@ -214,6 +211,3 @@ int scan(void)
 void open_console(void)
 {
 }
-
-#endif
-

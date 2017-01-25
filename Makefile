@@ -1,6 +1,6 @@
 
 NAME   	:= buckle
-SRC 	:= main.c scan-linux.c scan-windows.c scan-mac.c
+SRC 	:= main.c
 VERSION	:= 1.4.0
 
 PATH_AUDIO ?= "./wav"
@@ -18,6 +18,7 @@ ifdef mingw
  LDFLAGS += -mwindows -static-libgcc -static-libstdc++
  CFLAGS  += -DALURE_STATIC_LIBRARY
  LIBS    += -Lwin32/lib -lALURE32-static -lOpenAL32 
+ SRC     += scan-windows.c
 else 
  OS := $(shell uname)
  ifeq ($(OS), Darwin)
@@ -26,10 +27,12 @@ else
   LIBS    += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs alure openal)
   CFLAGS  += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags alure openal)
   LDFLAGS += -framework ApplicationServices -framework OpenAL
+  SRC     += scan-mac.c
  else
   BIN     := $(NAME)
   LIBS    += $(shell pkg-config --libs openal alure xtst x11)
   CFLAGS  += $(shell pkg-config --cflags openal alure xtst x11)
+  SRC     += scan-x11.c
  endif
 endif
 

@@ -1,6 +1,3 @@
-
-#ifdef linux
-
 #include <stdio.h>
 
 #include <X11/XKBlib.h>
@@ -91,6 +88,3 @@ void key_pressed_cb(XPointer arg, XRecordInterceptData *d)
 void open_console(void)
 {
 }
-
-#endif
-
