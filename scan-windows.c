@@ -1,6 +1,3 @@
-
-#ifdef WIN32
-
 #include <windows.h>
 #include <winuser.h>
 #include <stdio.h>
@@ -77,7 +74,3 @@ void open_console()
 	*stderr = *fp;
 	setvbuf(fp, NULL, _IONBF, 0 );
 }
-
-
-#endif
-
