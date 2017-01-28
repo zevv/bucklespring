@@ -88,10 +88,11 @@ usage: ./buckle [options]
 options:
 
   -d DEVICE use OpenAL audio device DEVICE
+  -f        use a fallback sound for unknown keys
   -g GAIN   set playback gain [0..100]
+  -m CODE   use CODE as mute key (default 0x46 for scroll lock)
   -h        show help
   -l        list available openAL audio devices
-  -m CODE   use CODE as mute key (default 0x46 for scroll lock)
   -p PATH   load .wav files from directory PATH
   -s WIDTH  set stereo width [0..100]
   -v        increase verbosity / debugging
