@@ -43,6 +43,15 @@ $ make
 $ ./buckle
 ```
 
+The default Linux build requires X11 for grabbing events. If you want to use
+Bucklespring on the linux console or Wayland display server, you can configure
+buckle to read events from the raw input devices in /dev/input. This will
+require special permissions for buckle to open the devices, though. Build with
+
+```
+$ make libinput=1
+```
+
 #### Using snap on Ubuntu (since 16.04) and other distros 
 
 ```
