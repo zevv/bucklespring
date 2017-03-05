@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 	int c;
 	int rv = EXIT_SUCCESS;
 
-	while( (c = getopt(argc, argv, "fhm:vd:g:lp:s:")) != EOF) {
+	while( (c = getopt(argc, argv, "Mfhm:vd:g:lp:s:")) != EOF) {
 		switch(c) {
 			case 'd':
 				opt_device = optarg;
@@ -100,6 +100,9 @@ int main(int argc, char **argv)
 				return 0;
 			case 'm':
 				opt_mute_keycode = strtol(optarg, NULL, 0);
+				break;
+			case 'M':
+				muted = !muted;
 				break;
 			case 'v':
 				opt_verbose++;
@@ -152,7 +155,7 @@ int main(int argc, char **argv)
 	alListener3f(AL_VELOCITY, 0, 0, 0);
 	alListenerfv(AL_ORIENTATION, listenerOri);
 
-	/* Path to data files can also be be specified by environment, this is
+	/* Path to data files can also be specified by environment, this is
 	 * used by the snap package */
 
 	const char *env_path = getenv("BUCKLESPRING_WAV_DIR");
@@ -186,6 +189,7 @@ static void usage(char *exe)
 		"  -f        use a fallback sound for unknown keys\n"
 		"  -g GAIN   set playback gain [0..100]\n"
 		"  -m CODE   use CODE as mute key (default 0x46 for scroll lock)\n"
+		"  -M        start the program muted\n"
 		"  -h        show help\n"
 		"  -l        list available openAL audio devices\n"
 		"  -p PATH   load .wav files from directory PATH\n"
