@@ -162,7 +162,7 @@ int main(int argc, char **argv)
 
 	printd("Using wav dir: \"%s\"\n", opt_path_audio);
 
-	scan();
+	scan(opt_verbose);
 
 out:
 	device = alcGetContextsDevice(context);

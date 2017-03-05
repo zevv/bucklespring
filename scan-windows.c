@@ -14,7 +14,7 @@ static HHOOK kbh = NULL;
 static int state[256] = { 0 };
 
 
-int scan(void)
+int scan(int verbose)
 {
 	HINSTANCE hInst;
 

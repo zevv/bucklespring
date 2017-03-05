@@ -7,7 +7,7 @@
 
 void key_pressed_cb(XPointer arg, XRecordInterceptData *d);
 
-int scan(void)
+int scan(int verbose)
 {
 	/* Initialize and start Xrecord context */
 	

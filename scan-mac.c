@@ -177,7 +177,7 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 }
 
 
-int scan(void)
+int scan(int verbose)
 {
 	CFMachPortRef      eventTap;
 	CGEventMask        eventMask;

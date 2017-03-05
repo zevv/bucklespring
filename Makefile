@@ -30,9 +30,15 @@ else
   SRC     += scan-mac.c
  else
   BIN     := $(NAME)
-  LIBS    += $(shell pkg-config --libs openal alure xtst x11)
-  CFLAGS  += $(shell pkg-config --cflags openal alure xtst x11)
-  SRC     += scan-x11.c
+  ifdef libinput
+   LIBS    += $(shell pkg-config --libs openal alure libinput libudev)
+   CFLAGS  += $(shell pkg-config --cflags openal alure libinput libudev)
+   SRC     += scan-libinput.c
+  else
+   LIBS    += $(shell pkg-config --libs openal alure xtst x11)
+   CFLAGS  += $(shell pkg-config --cflags openal alure xtst x11)
+   SRC     += scan-x11.c
+  endif
  endif
 endif
 
