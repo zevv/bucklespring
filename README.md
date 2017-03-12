@@ -8,7 +8,7 @@ bucklespring keyboard while typing on my notebook, mainly for the purpose of
 annoying the hell out of my coworkers.
 
 ![Model M](img/model-m.jpg)
-![Buckle](img/bukcle.gif)
+![Buckle](img/buckle.gif)
 
 Bucklespring runs as a background process and plays back the sound of each key
 pressed and released on your keyboard, just as if you were using an IBM
