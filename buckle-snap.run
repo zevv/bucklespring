@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if ! [ -e "$HOME/.alsoftrc" ]; then
+  echo "period_size = 32" > "$HOME/.alsoftrc"
+  echo "periods = 4" >> "$HOME/.alsoftrc"
+fi
+
+exec $SNAP/buckle $*

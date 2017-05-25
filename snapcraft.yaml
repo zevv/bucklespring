@@ -1,0 +1,52 @@
+name: bucklespring
+version: '1.4.0+git'
+summary: Nostalgia bucklespring keyboard sound
+description: |
+  This project emulates the sound of my old faithful IBM Model-M space saver
+  bucklespring keyboard while typing on my notebook, mainly for the purpose of
+  annoying the hell out of my coworkers.
+  
+  Bucklespring runs as a background
+  process and plays back the sound of each key pressed and released on your
+  keyboard, just as if you were using an IBM Model-M. The sound of each key has
+  carefully been sampled, and is played back while simulating the proper
+  distance and direction for a realistic 3D sound palette of pure nostalgic
+  bliss.
+
+grade: stable
+confinement: strict
+
+apps:
+  buckle:
+    command: buckle-snap.run
+    plugs: [x11, pulseaudio]
+
+parts:
+  deps:
+    plugin: nil
+    stage-packages:
+      - libdumb1
+      - libflac8
+      - libfluidsynth1
+      - libmodplug1
+      - libmpg123-0
+      - libsndfile1
+      - libvorbisfile3
+
+  buckle:
+    plugin: make
+    source: .
+    build-packages:
+      - pkg-config
+      - libopenal-dev
+      - libalure-dev
+      - libxtst-dev
+    artifacts: ['buckle', 'wav']
+
+  launcher:
+    plugin: dump
+    source: .
+    filesets:
+      launcherset: [ buckle-snap.run ]
+    stage: [ $launcherset ]
+    snap: [ $launcherset ]
