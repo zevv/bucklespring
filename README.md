@@ -38,8 +38,18 @@ $ sudo apt-get install bucklespring
 To compile on debian-based linux distributions, first make sure the require
 libraries and header files are installed, then simply run `make`:
 
+#### Dependencies on debian
 ```
 $ sudo apt-get install libopenal-dev libalure-dev libxtst-dev
+```
+
+#### Dependencies on arch linux
+```
+$ sudo pacman -S openal alure libxtst
+```
+
+#### Building
+```
 $ make
 $ ./buckle
 ```
