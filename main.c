@@ -8,8 +8,8 @@
 #include <unistd.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <getopt.h>
 #include <time.h>
-
 
 #ifdef __APPLE__
 #include <OpenAL/al.h>
@@ -76,12 +76,32 @@ static const char *opt_path_audio = PATH_AUDIO;
 static int muted = 0;
 
 
+static const char short_opts[] = "d:fg:hlm:Mp:s:v";
+
+static const struct option long_opts[] = {
+	{ "device",         required_argument, NULL, 'd' },
+	{ "fallback-sound", no_argument,       NULL, 'f' },
+	{ "gain",           required_argument, NULL, 'g' },
+	{ "help",           no_argument,       NULL, 'h' },
+	{ "list-devices",   no_argument,       NULL, 'l' },
+	{ "mute-keycode",   required_argument, NULL, 'm' },
+	{ "mute",           no_argument,       NULL, 'M' },
+	{ "audio-path",     required_argument, NULL, 'p' },
+	{ "stereo-width",   required_argument, NULL, 'w' },
+	{ "verbose",        no_argument,       NULL, 'v' },
+        { 0, 0, 0, 0 }
+};
+
+
+
 int main(int argc, char **argv)
 {
 	int c;
 	int rv = EXIT_SUCCESS;
+	int idx;
 
-	while( (c = getopt(argc, argv, "Mfhm:vd:g:lp:s:")) != EOF) {
+	while( (c = getopt_long(argc, argv, 
+			       short_opts, long_opts, &idx)) != -1) {
 		switch(c) {
 			case 'd':
 				opt_device = optarg;
@@ -104,14 +124,14 @@ int main(int argc, char **argv)
 			case 'M':
 				muted = !muted;
 				break;
-			case 'v':
-				opt_verbose++;
-				break;
 			case 'p':
 				opt_path_audio = optarg;
 				break;
 			case 's':
 				opt_stereo_width = atoi(optarg);
+				break;
+			case 'v':
+				opt_verbose++;
 				break;
 			default:
 				usage(argv[0]);
@@ -185,16 +205,16 @@ static void usage(char *exe)
 		"\n"
 		"options:\n"
 		"\n"
-		"  -d DEVICE use OpenAL audio device DEVICE\n"
-		"  -f        use a fallback sound for unknown keys\n"
-		"  -g GAIN   set playback gain [0..100]\n"
-		"  -m CODE   use CODE as mute key (default 0x46 for scroll lock)\n"
-		"  -M        start the program muted\n"
-		"  -h        show help\n"
-		"  -l        list available openAL audio devices\n"
-		"  -p PATH   load .wav files from directory PATH\n"
-		"  -s WIDTH  set stereo width [0..100]\n"
-		"  -v        increase verbosity / debugging\n",
+		"  -d, --device=DEVICE       use OpenAL audio device DEVICE\n"
+		"  -f, --fallback-sound      use a fallback sound for unknown keys\n"
+		"  -g, --gain=GAIN           set playback gain [0..100]\n"
+		"  -m, --mute-keycode=CODE   use CODE as mute key (default 0x46 for scroll lock)\n"
+		"  -M, --mute                start the program muted\n"
+		"  -h, --help                show help\n"
+		"  -l, --list-devices        list available openAL audio devices\n"
+		"  -p, --audi-path=PATH      load .wav files from directory PATH\n"
+		"  -s, --stereo-width=WIDTH  set stereo width [0..100]\n"
+		"  -v, --verbose             increase verbosity / debugging\n",
 		exe
        );
 }
