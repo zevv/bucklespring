@@ -21,39 +21,30 @@ int main(int argc, char **argv)
 	char cmd[256];
 	char fname[256];
 	FILE *f;
-	int fd_ev, fd_snd;
+	int fd_snd;
 	int samples = 0;
 	int triggered = 0;
 	FILE *fout = NULL;
 	int head = 0;
 	int16_t hist[HISTSIZE];
-	
-	if(argc < 2) {
-		fprintf(stderr, "usage: %s </dev/input/event#>\n", argv[0]);
-		exit(1);
-	}
+
+	fprintf(stderr, "Waiting for evdev data on stdin ...\n");
 
 	//f = popen("arecord -D plughw:1,0 -f cd -r 44100 -c 1", "r");
 	f = popen("parec --rate=44100 --format=s16le --channels=1", "r");
 	fd_snd = fileno(f);
 
-	fd_ev = open(argv[1], O_RDONLY);
-	if(fd_ev == -1) {
-		perror("Could not open event input");
-		exit(1);
-	}
-
 	fd_set fds;
 	while(1) {
 		FD_ZERO(&fds);
-		FD_SET(fd_ev, &fds);
+		FD_SET(STDIN_FILENO, &fds);
 		FD_SET(fd_snd, &fds);
 
 		select(16, &fds, NULL, NULL, NULL);
 
-		if(FD_ISSET(fd_ev, &fds)) {
+		if(FD_ISSET(STDIN_FILENO, &fds)) {
 
-			read(fd_ev, &event, sizeof event);
+			read(STDIN_FILENO, &event, sizeof event);
 
 			if(event.type != 1) continue;
 			if(event.value == 2) continue;
