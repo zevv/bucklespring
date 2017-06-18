@@ -3,7 +3,7 @@ NAME   	:= buckle
 SRC 	:= main.c
 VERSION	:= 1.4.0
 
-PATH_AUDIO ?= "./wav"
+PATH_AUDIO ?= "./wav/001"
 
 CFLAGS	?= -O3 -g
 LDFLAGS ?= -g
