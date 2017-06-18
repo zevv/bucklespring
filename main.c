@@ -23,6 +23,7 @@
 
 #define SRC_INVALID INT_MAX
 #define DEFAULT_MUTE_KEYCODE 0x46 /* Scroll Lock */
+#define MAX_NUM_SAMPLES 10 /* Maximum number of samples per key */
 
 #define TEST_ERROR(_msg)		\
 	error = alGetError();		\
@@ -123,6 +124,8 @@ int main(int argc, char **argv)
 	if(opt_verbose) {
 		open_console();
 	}
+
+	srand(time(0));
 
 	/* Create openal context */
 
@@ -301,23 +304,48 @@ int play(int code, int press)
 		handle_mute_key(code == opt_mute_keycode);
 	}
 
-	static ALuint buf[512] = { 0 };
-	static ALuint src[512] = { 0 };
+	static ALuint buf[512 * MAX_NUM_SAMPLES] = { 0 };
+	static ALuint src[512 * MAX_NUM_SAMPLES] = { 0 };
 
+	/* 0 <= "code" <= 255, which means that 0 <= "idx" <= 511. We could
+	 * then add "$rand * 512" to jump to one of the possible samples for
+	 * this keycode. */
 	int idx = code + press * 256;
 
+	/* Find one valid sample for this key. */
+	char fname[256];
+	int rand_start = rand() % MAX_NUM_SAMPLES, rand_off, rand_now;
+	for (rand_off = 0; rand_off < MAX_NUM_SAMPLES; rand_off++) {
+		rand_now = (rand_start + rand_off) % MAX_NUM_SAMPLES;
+		snprintf(fname, sizeof fname, "%s/%02x-%d-%d.wav", opt_path_audio, code, press, rand_now);
+		printd("Trying sample %s", fname);
+		if (access(fname, R_OK) == 0)
+			break;
+	}
+
+	if (rand_off == MAX_NUM_SAMPLES) {
+		/* Could not find a sample for this key code. Fall back to
+		 * random offset 0. The following code will then try to read the
+		 * audio file which will fail. If the user requested a fallback
+		 * sound, that one will be used (if it exists).
+		 *
+		 * Note that we do not reset "fname", because it doesn't matter.
+		 * None of the files exist, loading will fail anyway. */
+		rand_now = 0;
+	}
+
+	printd("Decided to use sample #%d (%s)", rand_now, fname);
+
+	idx += rand_now * 512;
+
 	if(src[idx] == 0) {
-
-		char fname[256];
-		snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, code, press);
-
 		printd("Loading audio file \"%s\"", fname);
 
 		buf[idx] = alureCreateBufferFromFile(fname);
 		if(buf[idx] == 0) {
 
 			if(opt_fallback_sound) {
-				snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, 0x31, press);
+				snprintf(fname, sizeof(fname), "%s/%02x-%d-0.wav", opt_path_audio, 0x31, press);
 				buf[idx] = alureCreateBufferFromFile(fname);
 			} else {
 				fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alureGetErrorString());
