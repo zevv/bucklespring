@@ -15,6 +15,22 @@ struct input_event {
 
 #define HISTSIZE 60
 
+void
+samplename(char *buf, size_t buf_len, unsigned short code, unsigned int value)
+{
+	int i;
+
+	for (i = 0; i < 100; i++)
+	{
+		snprintf(buf, buf_len, "wav-new/%02x-%d-%d.wav", code, value, i);
+		if (access(buf, R_OK) == -1)
+			return;
+	}
+
+	fprintf(stderr, "Damn, you recorded too many samples for %02x %d\n", code, value);
+	exit(EXIT_FAILURE);
+}
+
 int main(int argc, char **argv)
 {
 	struct input_event event;
@@ -50,7 +66,7 @@ int main(int argc, char **argv)
 			if(event.value == 2) continue;
 
 			if(triggered == 0) {
-				snprintf(fname, sizeof fname, "wav-new/%02x-%d.wav", event.code, event.value);
+				samplename(fname, sizeof fname, event.code, event.value);
 				snprintf(cmd, sizeof cmd, "sox -qq -r 44100 -e signed -b 16 -c 1 -t raw - %s", fname);
 				printf("%02x %d: ", event.code, event.value);
 				fflush(stdout);
