@@ -44,6 +44,12 @@ int main(int argc, char **argv)
 	int head = 0;
 	int16_t hist[HISTSIZE];
 
+	/* Run like:
+	 *
+	 *     $ (sleep 2; sudo stdbuf -i0 -o0 cat /dev/input/event5) | ./rec
+	 *
+	 * Begin with a sleep, so we don't catch the "Return, released"
+	 * event that started this command. */
 	fprintf(stderr, "Waiting for evdev data on stdin ...\n");
 
 	//f = popen("arecord -D plughw:1,0 -f cd -r 44100 -c 1", "r");
