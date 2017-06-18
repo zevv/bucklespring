@@ -20,7 +20,7 @@ samplename(char *buf, size_t buf_len, unsigned short code, unsigned int value)
 {
 	int i;
 
-	for (i = 0; i < 100; i++)
+	for (i = 0; i < 10; i++)
 	{
 		snprintf(buf, buf_len, "wav-new/%02x-%d-%d.wav", code, value, i);
 		if (access(buf, R_OK) == -1)
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 
 			if(triggered == 0) {
 				samplename(fname, sizeof fname, event.code, event.value);
-				snprintf(cmd, sizeof cmd, "sox -qq -r 44100 -e signed -b 16 -c 1 -t raw - %s", fname);
+				snprintf(cmd, sizeof cmd, "sox -qq -r 44100 -e signed -b 16 -c 1 -t raw --norm=-3 - %s", fname);
 				printf("%02x %d: ", event.code, event.value);
 				fflush(stdout);
 				fout = popen(cmd, "w");
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
 
 			if(triggered) {
 				if(samples == 0) {
-					if(buf < -2000 || buf > 2000) {
+					if(buf < -1000 || buf > 1000) {
 						samples = 1;
 						printf(">");
 						fflush(stdout);
