@@ -23,7 +23,7 @@
 
 #define SRC_INVALID INT_MAX
 #define DEFAULT_MUTE_KEYCODE 0x46 /* Scroll Lock */
-#define MAX_NUM_SAMPLES 10 /* Maximum number of samples per key */
+#define MAX_NUM_SAMPLES 3 /* Maximum number of samples per key */
 
 #define TEST_ERROR(_msg)		\
 	error = alGetError();		\
@@ -312,31 +312,21 @@ int play(int code, int press)
 	 * this keycode. */
 	int idx = code + press * 256;
 
-	/* Find one valid sample for this key. */
+	/* Find a valid sample for this key. Assumes that a key either has
+	 * MAX_NUM_SAMPLES samples or just one sample. */
 	char fname[256];
-	int rand_start = rand() % MAX_NUM_SAMPLES, rand_off, rand_now;
-	for (rand_off = 0; rand_off < MAX_NUM_SAMPLES; rand_off++) {
-		rand_now = (rand_start + rand_off) % MAX_NUM_SAMPLES;
-		snprintf(fname, sizeof fname, "%s/%02x-%d-%d.wav", opt_path_audio, code, press, rand_now);
-		printd("Trying sample %s", fname);
-		if (access(fname, R_OK) == 0)
-			break;
+	int rand_off = rand() % MAX_NUM_SAMPLES;
+	snprintf(fname, sizeof fname, "%s/%02x-%d-%d.wav", opt_path_audio, code, press, rand_off);
+	if (access(fname, R_OK) != 0)
+	{
+		printd("Sample #%d not found, falling back to #0");
+		rand_off = 0;
+		snprintf(fname, sizeof fname, "%s/%02x-%d-%d.wav", opt_path_audio, code, press, rand_off);
 	}
 
-	if (rand_off == MAX_NUM_SAMPLES) {
-		/* Could not find a sample for this key code. Fall back to
-		 * random offset 0. The following code will then try to read the
-		 * audio file which will fail. If the user requested a fallback
-		 * sound, that one will be used (if it exists).
-		 *
-		 * Note that we do not reset "fname", because it doesn't matter.
-		 * None of the files exist, loading will fail anyway. */
-		rand_now = 0;
-	}
+	printd("Decided to use sample #%d (%s)", rand_off, fname);
 
-	printd("Decided to use sample #%d (%s)", rand_now, fname);
-
-	idx += rand_now * 512;
+	idx += rand_off * 512;
 
 	if(src[idx] == 0) {
 		printd("Loading audio file \"%s\"", fname);
