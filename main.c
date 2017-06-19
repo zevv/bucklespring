@@ -21,22 +21,19 @@
 
 #include "buckle.h"
 
-#define SRC_INVALID INT_MAX
+#define MAX_SOURCES 32
 #define DEFAULT_MUTE_KEYCODE 0x46 /* Scroll Lock */
 #define MAX_NUM_SAMPLES 3 /* Maximum number of samples per key */
-
-#define TEST_ERROR(_msg)		\
-	error = alGetError();		\
-	if (error != AL_NO_ERROR) {	\
-		fprintf(stderr, _msg "\n");	\
-		exit(1);		\
-	}
 
 
 static void usage(char *exe);
 static void list_devices(void);
+static void test_openal_error(const char *msg);
 static double find_key_loc(int code);
 
+
+static ALuint src[MAX_SOURCES] = { 0 };
+static ALuint buf[512 * MAX_NUM_SAMPLES] = { 0 };
 
 
 /* 
@@ -76,7 +73,6 @@ static const char *opt_device = NULL;
 static const char *opt_path_audio = PATH_AUDIO;
 static int muted = 0;
 
-
 static const char short_opts[] = "d:fg:hlm:Mp:s:v";
 
 static const struct option long_opts[] = {
@@ -92,7 +88,6 @@ static const struct option long_opts[] = {
 	{ "verbose",        no_argument,       NULL, 'v' },
         { 0, 0, 0, 0 }
 };
-
 
 
 int main(int argc, char **argv)
@@ -152,7 +147,6 @@ int main(int argc, char **argv)
 	ALCdevice *device = NULL;
 	ALCcontext *context = NULL;
 	ALfloat listenerOri[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
-	ALCenum error;
 
 	if (!opt_device) {
 		opt_device = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
@@ -172,11 +166,16 @@ int main(int argc, char **argv)
 		fprintf(stderr, "failed to make default context\n");
 		return -1;
 	}
-	TEST_ERROR("make default context");
+	test_openal_error("make default context");
 
 	alListener3f(AL_POSITION, 0, 0, 0);
 	alListener3f(AL_VELOCITY, 0, 0, 0);
 	alListenerfv(AL_ORIENTATION, listenerOri);
+
+	/* Generate sample sources */
+
+	alGenSources(MAX_SOURCES, src);
+	test_openal_error("source generation");
 
 	/* Path to data files can also be specified by environment, this is
 	 * used by the snap package */
@@ -197,6 +196,16 @@ out:
 	if(device) alcCloseDevice(device);
 
 	return rv;
+}
+
+
+static void test_openal_error(const char *msg)
+{
+	ALCenum error = alGetError();
+	if (error != AL_NO_ERROR) {
+		fprintf(stderr, "OpenAL error at %s\n", msg);
+		exit(1);
+	}
 }
 
 
@@ -314,31 +323,31 @@ static void handle_mute_key(int mute_key)
 
 int play(int code, int press)
 {
-	ALCenum error;
+	static int src_idx = 0;
 
 	printd("scancode %d/0x%x", code, code);
 
 	/* Check for mute sequence: ScrollLock down+up+down */
 
-	if (press) {
+	if(press) {
 		handle_mute_key(code == opt_mute_keycode);
 	}
-
-	static ALuint buf[512 * MAX_NUM_SAMPLES] = { 0 };
-	static ALuint src[512 * MAX_NUM_SAMPLES] = { 0 };
 
 	/* 0 <= "code" <= 255, which means that 0 <= "idx" <= 511. We could
 	 * then add "$rand * 512" to jump to one of the possible samples for
 	 * this keycode. */
-	int idx = code + press * 256;
+
+	int buf_idx = code + press * 256;
 
 	/* Find a valid sample for this key. Assumes that a key either has
 	 * MAX_NUM_SAMPLES samples or just one sample. */
+
 	char fname[256];
 	int rand_off = rand() % MAX_NUM_SAMPLES;
+
 	snprintf(fname, sizeof fname, "%s/%02x-%d-%d.wav", opt_path_audio, code, press, rand_off);
-	if (access(fname, R_OK) != 0)
-	{
+
+	if (access(fname, R_OK) != 0) {
 		printd("Sample #%d not found, falling back to #0");
 		rand_off = 0;
 		snprintf(fname, sizeof fname, "%s/%02x-%d-%d.wav", opt_path_audio, code, press, rand_off);
@@ -346,44 +355,42 @@ int play(int code, int press)
 
 	printd("Decided to use sample #%d (%s)", rand_off, fname);
 
-	idx += rand_off * 512;
+	buf_idx += rand_off * 512;
 
-	if(src[idx] == 0) {
+	/* Load sample if not yet loaded */
+
+	if(buf[buf_idx] == 0) {
+
 		printd("Loading audio file \"%s\"", fname);
+		buf[buf_idx] = alureCreateBufferFromFile(fname);
 
-		buf[idx] = alureCreateBufferFromFile(fname);
-		if(buf[idx] == 0) {
+		if(buf[buf_idx] == 0) {
 
 			if(opt_fallback_sound) {
 				snprintf(fname, sizeof(fname), "%s/%02x-%d-0.wav", opt_path_audio, 0x31, press);
-				buf[idx] = alureCreateBufferFromFile(fname);
+				buf[buf_idx] = alureCreateBufferFromFile(fname);
 			} else {
 				fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alureGetErrorString());
 			}
-
-			if(buf[idx] == 0) {
-				src[idx] = SRC_INVALID;
-				return -1;
-			}
 		}
-	
-		alGenSources((ALuint)1, &src[idx]);
-		TEST_ERROR("source generation");
-
-		double x = find_key_loc(code);
-		alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
-		alSourcef(src[idx], AL_GAIN, opt_gain / 100.0);
-
-		alSourcei(src[idx], AL_BUFFER, buf[idx]);
-		TEST_ERROR("buffer binding");
 	}
 
+	/* Find a free source for the buffer. For now we just use round robin */
 
-	if(src[idx] != 0 && src[idx] != SRC_INVALID) {
-		if (!muted)
-			alSourcePlay(src[idx]);
-		TEST_ERROR("source playing");
+	double x = find_key_loc(code);
+	alSource3f(src[src_idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
+	alSourcef(src[src_idx], AL_GAIN, opt_gain / 100.0);
+
+	alSourcei(src[src_idx], AL_BUFFER, buf[buf_idx]);
+	test_openal_error("buffer binding");
+
+	if (!muted) {
+		alSourcePlay(src[src_idx]);
 	}
+
+	test_openal_error("source playing");
+
+	src_idx = (src_idx + 1) % MAX_SOURCES;
 
 	return 0;
 }
