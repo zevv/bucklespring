@@ -233,7 +233,7 @@ static void usage(char *exe)
 		"  -M, --mute                start the program muted\n"
 		"  -h, --help                show help\n"
 		"  -l, --list-devices        list available openAL audio devices\n"
-		"  -p, --audi-path=PATH      load .wav files from directory PATH\n"
+		"  -p, --audio-path=PATH     load .wav files from directory PATH\n"
 		"  -s, --stereo-width=WIDTH  set stereo width [0..100]\n"
 		"  -v, --verbose             increase verbosity / debugging\n",
 		exe
