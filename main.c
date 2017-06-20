@@ -32,12 +32,10 @@ static void test_openal_error(const char *msg);
 static double find_key_loc(int code);
 
 
-static ALuint src[MAX_SOURCES] = { 0 };
-static ALuint buf[512 * MAX_NUM_SAMPLES] = { 0 };
-
-
 /* 
- * Horizontal position on keyboard for each key as they are located on my model-M
+ * Horizontal position on keyboard for each key as they are located on my
+ * model-M. I do not like this at all, this whould probably reworked to a
+ * proper table or read from a config file or so
  */
 
 static int keyloc[][32] = {
@@ -51,9 +49,12 @@ static int keyloc[][32] = {
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x69, 0x6c, 0x6a, -1 },
 };
 
+
 /* 
- * Horizontal position on keyboard of the pragmatic center of the row, since keys come in different sizes and shapes
+ * Horizontal position on keyboard of the pragmatic center of the row, since
+ * keys come in different sizes and shapes
  */
+
 static double midloc[] = {
 	7.5,
 	7.5,
@@ -64,6 +65,15 @@ static double midloc[] = {
 	4.5,
 };
 
+static int muted = 0;
+static ALuint src[MAX_SOURCES] = { 0 };
+static ALuint buf[512 * MAX_NUM_SAMPLES] = { 0 };
+
+
+/*
+ * Cmdline options
+ */
+
 static int opt_verbose = 0;
 static int opt_stereo_width = 50;
 static int opt_gain = 100;
@@ -71,7 +81,6 @@ static int opt_fallback_sound = 0;
 static int opt_mute_keycode = DEFAULT_MUTE_KEYCODE;
 static const char *opt_device = NULL;
 static const char *opt_path_audio = PATH_AUDIO;
-static int muted = 0;
 
 static const char short_opts[] = "d:fg:hlm:Mp:s:v";
 
@@ -140,7 +149,7 @@ int main(int argc, char **argv)
 		open_console();
 	}
 
-	srand(time(0));
+	srand(time(NULL));
 
 	/* Create openal context */
 
@@ -231,6 +240,7 @@ static void usage(char *exe)
        );
 }
 
+
 static void list_devices(void)
 {
 	const ALCchar *devices = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
@@ -251,7 +261,7 @@ static void list_devices(void)
 void printd(const char *fmt, ...)
 {
 	if(opt_verbose) {
-		
+
 		char buf[256];
 		va_list va;
 
@@ -266,7 +276,7 @@ void printd(const char *fmt, ...)
 
 /*
  * Find horizontal position of the given key on the keyboard. returns -1.0 for
- * left to 1.0 for right 
+ * left to 1.0 for right
  */
 
 static double find_key_loc(int code)
@@ -325,7 +335,8 @@ int play(int code, int press)
 {
 	static int src_idx = 0;
 
-	printd("scancode %d/0x%x", code, code);
+	printd("key %d/0x%x %sed", code, code, press ? "press" : "release");
+
 
 	/* Check for mute sequence: ScrollLock down+up+down */
 
@@ -333,11 +344,17 @@ int play(int code, int press)
 		handle_mute_key(code == opt_mute_keycode);
 	}
 
+	if(muted) {
+		return 0;
+	}
+
+
 	/* 0 <= "code" <= 255, which means that 0 <= "idx" <= 511. We could
 	 * then add "$rand * 512" to jump to one of the possible samples for
 	 * this keycode. */
 
 	int buf_idx = code + press * 256;
+
 
 	/* Find a valid sample for this key. Assumes that a key either has
 	 * MAX_NUM_SAMPLES samples or just one sample. */
@@ -353,11 +370,10 @@ int play(int code, int press)
 		snprintf(fname, sizeof fname, "%s/%02x-%d-%d.wav", opt_path_audio, code, press, rand_off);
 	}
 
-	printd("Decided to use sample #%d (%s)", rand_off, fname);
-
-	buf_idx += rand_off * 512;
 
 	/* Load sample if not yet loaded */
+	
+	buf_idx += rand_off * 512;
 
 	if(buf[buf_idx] == 0) {
 
@@ -375,11 +391,13 @@ int play(int code, int press)
 		}
 	}
 
-	/* Find a free source for the buffer. For now we just use round robin */
+
+	/* Bind sample buffer to the next available source */
 
 	double x = find_key_loc(code);
 	alSource3f(src[src_idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
 	alSourcef(src[src_idx], AL_GAIN, opt_gain / 100.0);
+
 
 	/* Stop playing and bind a new buffer to the source */
 
@@ -389,17 +407,16 @@ int play(int code, int press)
 	alSourcei(src[src_idx], AL_BUFFER, buf[buf_idx]);
 	test_openal_error("buffer binding");
 
-	if (!muted) {
-		alSourcePlay(src[src_idx]);
-	}
+	alSourcePlay(src[src_idx]);
+	test_openal_error("play");
 
-	test_openal_error("source playing");
+
+	/* Round robin to the next source */
 
 	src_idx = (src_idx + 1) % MAX_SOURCES;
 
 	return 0;
 }
-
 
 
 /*
