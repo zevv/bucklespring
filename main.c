@@ -381,6 +381,11 @@ int play(int code, int press)
 	alSource3f(src[src_idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
 	alSourcef(src[src_idx], AL_GAIN, opt_gain / 100.0);
 
+	/* Stop playing and bind a new buffer to the source */
+
+	alSourceStop(src[src_idx]);
+	test_openal_error("stop");
+
 	alSourcei(src[src_idx], AL_BUFFER, buf[buf_idx]);
 	test_openal_error("buffer binding");
 
