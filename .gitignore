@@ -1,4 +1,5 @@
 *.swp
 *.o
+*.exe
 cscope.out
 buckle
