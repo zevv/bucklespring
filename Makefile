@@ -63,7 +63,7 @@ rec: rec.c
 	gcc -Wall -Werror rec.c -o rec
 
 clean:
-	rm -f $(OBJS) $(BIN) core rec
+	$(RM) $(OBJS) $(BIN) core rec
 
 strip: $(BIN)
 	$(STRIP) $(BIN)
