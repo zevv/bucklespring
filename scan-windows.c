@@ -16,7 +16,7 @@ static int state[256] = { 0 };
 
 int scan(int verbose)
 {
-	HINSTANCE hInst;
+	HINSTANCE hInst = GetModuleHandle(NULL);
 
 	kbh = SetWindowsHookEx(WH_KEYBOARD_LL, handle_kbh, hInst, 0);
 
@@ -55,7 +55,7 @@ LRESULT CALLBACK handle_kbh(int nCode, WPARAM wParam, LPARAM lParam)
 void open_console()
 {
 	int hConHandle;
-	long lStdHandle;
+	INT_PTR lStdHandle;
 	CONSOLE_SCREEN_BUFFER_INFO coninfo;
 
 	FILE *fp;
@@ -66,7 +66,7 @@ void open_console()
 	coninfo.dwSize.Y = 500;
 	SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
 
-	lStdHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);
+	lStdHandle = (INT_PTR)GetStdHandle(STD_OUTPUT_HANDLE);
 	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
 
 	fp = _fdopen( hConHandle, "w" );

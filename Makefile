@@ -16,8 +16,7 @@ ifdef mingw
  CROSS   := i686-w64-mingw32-
  CFLAGS  += -Iwin32/include -Iwin32/include/AL
  LDFLAGS += -mwindows -static-libgcc -static-libstdc++
- CFLAGS  += -DALURE_STATIC_LIBRARY
- LIBS    += -Lwin32/lib -lALURE32-static -lOpenAL32 
+ LIBS    += -Lwin32/lib -lALURE32 -lOpenAL32
  SRC     += scan-windows.c
 else 
  OS := $(shell uname)
@@ -64,7 +63,7 @@ rec: rec.c
 	gcc -Wall -Werror rec.c -o rec
 
 clean:
-	rm -f $(OBJS) $(BIN) core rec
+	$(RM) $(OBJS) $(BIN) core rec
 
 strip: $(BIN)
 	$(STRIP) $(BIN)
