@@ -81,6 +81,7 @@ the following should do:
 
 ```
 $ brew install alure pkg-config
+$ git clone https://github.com/zevv/bucklespring.git && cd bucklespring
 $ make
 $ sudo ./buckle
 ```
