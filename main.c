@@ -333,7 +333,9 @@ int play(int code, int press)
 		TEST_ERROR("source generation");
 
 		double x = find_key_loc(code);
-		alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
+		if (opt_stereo_width > 0) {
+			alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
+		}
 		alSourcef(src[idx], AL_GAIN, opt_gain / 100.0);
 
 		alSourcei(src[idx], AL_BUFFER, buf[idx]);

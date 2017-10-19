@@ -112,6 +112,7 @@ options:
   -f        use a fallback sound for unknown keys
   -g GAIN   set playback gain [0..100]
   -m CODE   use CODE as mute key (default 0x46 for scroll lock)
+  -M        start the program muted
   -h        show help
   -l        list available openAL audio devices
   -p PATH   load .wav files from directory PATH
