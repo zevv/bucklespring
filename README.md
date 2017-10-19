@@ -117,7 +117,6 @@ options:
   -l        list available openAL audio devices
   -p PATH   load .wav files from directory PATH
   -s WIDTH  set stereo width [0..100]
-  -a        disable positional audio
   -v        increase verbosity / debugging
 ````
 
