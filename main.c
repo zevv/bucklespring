@@ -71,6 +71,7 @@ static int opt_stereo_width = 50;
 static int opt_gain = 100;
 static int opt_fallback_sound = 0;
 static int opt_mute_keycode = DEFAULT_MUTE_KEYCODE;
+static int opt_positional_audio = 1;
 static const char *opt_device = NULL;
 static const char *opt_path_audio = PATH_AUDIO;
 static int muted = 0;
@@ -81,7 +82,7 @@ int main(int argc, char **argv)
 	int c;
 	int rv = EXIT_SUCCESS;
 
-	while( (c = getopt(argc, argv, "Mfhm:vd:g:lp:s:")) != EOF) {
+	while( (c = getopt(argc, argv, "aMfhm:vd:g:lp:s:")) != EOF) {
 		switch(c) {
 			case 'd':
 				opt_device = optarg;
@@ -112,6 +113,9 @@ int main(int argc, char **argv)
 				break;
 			case 's':
 				opt_stereo_width = atoi(optarg);
+				break;
+			case 'a':
+				opt_positional_audio--;
 				break;
 			default:
 				usage(argv[0]);
@@ -194,6 +198,7 @@ static void usage(char *exe)
 		"  -l        list available openAL audio devices\n"
 		"  -p PATH   load .wav files from directory PATH\n"
 		"  -s WIDTH  set stereo width [0..100]\n"
+		"  -a        disable positional audio\n"
 		"  -v        increase verbosity / debugging\n",
 		exe
        );
@@ -333,7 +338,9 @@ int play(int code, int press)
 		TEST_ERROR("source generation");
 
 		double x = find_key_loc(code);
-		alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
+		if (opt_positional_audio > 0) {
+			alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
+		}
 		alSourcef(src[idx], AL_GAIN, opt_gain / 100.0);
 
 		alSourcei(src[idx], AL_BUFFER, buf[idx]);
