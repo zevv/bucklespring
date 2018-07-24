@@ -27,7 +27,7 @@
 #define TEST_ERROR(_msg)		\
 	error = alGetError();		\
 	if (error != AL_NO_ERROR) {	\
-		fprintf(stderr, _msg "\n");	\
+		fprintf(stderr, _msg " %d\n", error);	\
 		exit(1);		\
 	}
 
@@ -183,6 +183,8 @@ int main(int argc, char **argv)
 		opt_path_audio = env_path;
 	}
 
+	play(0, 0, 1);
+
 	printd("Using wav dir: \"%s\"\n", opt_path_audio);
 
 	scan(opt_verbose);
@@ -309,7 +311,7 @@ static void handle_mute_key(int mute_key)
  * Play audio file for given keycode. Wav files are loaded on demand
  */
 
-int play(int code, int press)
+int play(int code, int press, int loop)
 {
 	ALCenum error;
 
@@ -360,8 +362,12 @@ int play(int code, int press)
 
 		alSourcei(src[idx], AL_BUFFER, buf[idx]);
 		TEST_ERROR("buffer binding");
-	}
 
+		if(loop) {
+			alSourcei(src[idx], AL_LOOPING, 1);
+			TEST_ERROR("AL_LOOPING");
+		}
+	}
 
 	if(src[idx] != 0 && src[idx] != SRC_INVALID) {
 		if (!muted)

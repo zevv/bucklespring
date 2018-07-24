@@ -43,7 +43,7 @@ LRESULT CALLBACK handle_kbh(int nCode, WPARAM wParam, LPARAM lParam)
 
 	if(code < 256) {
 		if(state[code] != updown) {
-			play(code, updown);
+			play(code, updown, 0);
 			state[code] = updown;
 		}
 	}

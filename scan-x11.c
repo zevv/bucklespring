@@ -71,10 +71,10 @@ void key_pressed_cb(XPointer arg, XRecordInterceptData *d)
 
 		switch (type) {
 			case KeyPress:
-				play(key, 1);
+				play(key, 1, 0);
 				break;
 			case KeyRelease:
-				play(key, 0);
+				play(key, 0, 0);
 				break;
 			default:
 				break;

@@ -164,10 +164,10 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 
 	switch (type) {
 		case kCGEventKeyDown:
-			play(key, 1);
+			play(key, 1, 0);
 			break;
 		case kCGEventKeyUp:
-			play(key, 0);
+			play(key, 0, 0);
 			break;
 		default:
 			break;

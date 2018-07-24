@@ -40,7 +40,7 @@ static void handle_key(struct libinput_event *ev)
 	enum libinput_key_state state = libinput_event_keyboard_get_key_state(k);
 	uint32_t key = libinput_event_keyboard_get_key(k);
 
-	play(key, state == LIBINPUT_KEY_STATE_PRESSED);
+	play(key, state == LIBINPUT_KEY_STATE_PRESSED, 0);
 }
 
 static void handle_events(struct libinput *li)
