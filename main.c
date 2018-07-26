@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <getopt.h>
 #include <time.h>
+#include <sys/stat.h>
 
 #ifdef __APPLE__
 #include <OpenAL/al.h>
@@ -213,36 +214,33 @@ static void load_sample(int code, int press)
 	ALCenum error;
 
 	snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, code, press);
+
+	struct stat st;
+	if(lstat(fname, &st) == 0) {
 	
-	int idx = code + press * 256;
+		int idx = code + press * 256;
 
-	printd("Loading audio file \"%s\"", fname);
-
-	buf[idx] = alureCreateBufferFromFile(fname);
-	if(buf[idx] == 0) {
-
-		if(opt_fallback_sound) {
-			snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, 0x31, press);
-			buf[idx] = alureCreateBufferFromFile(fname);
-		}
-
+		buf[idx] = alureCreateBufferFromFile(fname);
 		if(buf[idx] == 0) {
 			src[idx] = SRC_INVALID;
+			fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alureGetErrorString());
 			return;
 		}
+		
+		printd("Loaded audio file \"%s\"", fname);
+
+		alGenSources((ALuint)1, &src[idx]);
+		TEST_ERROR("source generation");
+
+		double x = find_key_loc(code);
+		if (opt_stereo_width > 0) {
+			alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
+		}
+		alSourcef(src[idx], AL_GAIN, opt_gain / 100.0);
+
+		alSourcei(src[idx], AL_BUFFER, buf[idx]);
+		TEST_ERROR("buffer binding");
 	}
-
-	alGenSources((ALuint)1, &src[idx]);
-	TEST_ERROR("source generation");
-
-	double x = find_key_loc(code);
-	if (opt_stereo_width > 0) {
-		alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
-	}
-	alSourcef(src[idx], AL_GAIN, opt_gain / 100.0);
-
-	alSourcei(src[idx], AL_BUFFER, buf[idx]);
-	TEST_ERROR("buffer binding");
 }
 
 
@@ -372,6 +370,11 @@ int play(int code, int press)
 	}
 
 	int idx = code + press * 256;
+
+	if((src[idx] == SRC_INVALID) && opt_fallback_sound) {
+		idx = 1 + press * 256;
+		printd("Fallback to %d\n", idx);
+	}
 
 	if(src[idx] != 0 && src[idx] != SRC_INVALID) {
 		if (!muted)
