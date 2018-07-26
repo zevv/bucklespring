@@ -34,7 +34,11 @@
 
 static void usage(char *exe);
 static void list_devices(void);
+static void load_sample(int code, int press);
 static double find_key_loc(int code);
+
+static ALuint buf[512] = { 0 };
+static ALuint src[512] = { 0 };
 
 
 
@@ -185,6 +189,12 @@ int main(int argc, char **argv)
 
 	printd("Using wav dir: \"%s\"\n", opt_path_audio);
 
+	int code;
+	for(code=0; code<255; code++) {
+		load_sample(code, 0);
+		load_sample(code, 1);
+	}
+
 	scan(opt_verbose);
 
 out:
@@ -195,6 +205,46 @@ out:
 
 	return rv;
 }
+
+
+static void load_sample(int code, int press)
+{
+	char fname[256];
+	ALCenum error;
+
+	snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, code, press);
+	
+	int idx = code + press * 256;
+
+	printd("Loading audio file \"%s\"", fname);
+
+	buf[idx] = alureCreateBufferFromFile(fname);
+	if(buf[idx] == 0) {
+
+		if(opt_fallback_sound) {
+			snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, 0x31, press);
+			buf[idx] = alureCreateBufferFromFile(fname);
+		}
+
+		if(buf[idx] == 0) {
+			src[idx] = SRC_INVALID;
+			return;
+		}
+	}
+
+	alGenSources((ALuint)1, &src[idx]);
+	TEST_ERROR("source generation");
+
+	double x = find_key_loc(code);
+	if (opt_stereo_width > 0) {
+		alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
+	}
+	alSourcef(src[idx], AL_GAIN, opt_gain / 100.0);
+
+	alSourcei(src[idx], AL_BUFFER, buf[idx]);
+	TEST_ERROR("buffer binding");
+}
+
 
 
 static void usage(char *exe)
@@ -321,47 +371,7 @@ int play(int code, int press)
 		handle_mute_key(code == opt_mute_keycode);
 	}
 
-	static ALuint buf[512] = { 0 };
-	static ALuint src[512] = { 0 };
-
 	int idx = code + press * 256;
-
-	if(src[idx] == 0) {
-
-		char fname[256];
-		snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, code, press);
-
-		printd("Loading audio file \"%s\"", fname);
-
-		buf[idx] = alureCreateBufferFromFile(fname);
-		if(buf[idx] == 0) {
-
-			if(opt_fallback_sound) {
-				snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, 0x31, press);
-				buf[idx] = alureCreateBufferFromFile(fname);
-			} else {
-				fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alureGetErrorString());
-			}
-
-			if(buf[idx] == 0) {
-				src[idx] = SRC_INVALID;
-				return -1;
-			}
-		}
-	
-		alGenSources((ALuint)1, &src[idx]);
-		TEST_ERROR("source generation");
-
-		double x = find_key_loc(code);
-		if (opt_stereo_width > 0) {
-			alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
-		}
-		alSourcef(src[idx], AL_GAIN, opt_gain / 100.0);
-
-		alSourcei(src[idx], AL_BUFFER, buf[idx]);
-		TEST_ERROR("buffer binding");
-	}
-
 
 	if(src[idx] != 0 && src[idx] != SRC_INVALID) {
 		if (!muted)
