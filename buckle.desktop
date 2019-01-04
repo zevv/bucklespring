@@ -1,0 +1,11 @@
+[Desktop Entry]
+
+Type=Application
+Name=Buckle
+Comment=Bucklespring keyboard sound
+Exec=buckle -f
+Icon=input-keyboard
+StartupNotify=false
+Terminal=false
+Hidden=false
+
