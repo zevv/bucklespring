@@ -1,0 +1,12 @@
+[Unit]
+Description=Bucklespring keyboard sound
+
+[Service]
+Type=simple
+Restart=on-failure
+ExecStart=/usr/bin/buckle -f
+
+[Install]
+WantedBy=default.target
+
+# vim: syntax=systemd
