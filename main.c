@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <time.h>
 
+#include <vorbis/vorbisfile.h>
 
 #ifdef __APPLE__
 #include <OpenAL/al.h>
@@ -23,7 +24,6 @@
 
 #define SRC_INVALID INT_MAX
 #define DEFAULT_MUTE_KEYCODE 0x46 /* Scroll Lock */
-#define DEFAULT_MONO_KEYCODE 0x36
 
 #define TEST_ERROR(_msg)		\
 	error = alGetError();		\
@@ -72,11 +72,9 @@ static int opt_stereo_width = 50;
 static int opt_gain = 100;
 static int opt_fallback_sound = 0;
 static int opt_mute_keycode = DEFAULT_MUTE_KEYCODE;
-static int opt_mono_keycode = DEFAULT_MONO_KEYCODE; 
 static const char *opt_device = NULL;
 static const char *opt_path_audio = PATH_AUDIO;
 static int muted = 0;
-static int mono = 0;
 
 
 int main(int argc, char **argv)
@@ -84,7 +82,7 @@ int main(int argc, char **argv)
 	int c;
 	int rv = EXIT_SUCCESS;
 
-	while( (c = getopt(argc, argv, "AMfhma:vd:g:lp:s:")) != EOF) {
+	while( (c = getopt(argc, argv, "Mfhm:vd:g:lp:s:")) != EOF) {
 		switch(c) {
 			case 'd':
 				opt_device = optarg;
@@ -115,12 +113,6 @@ int main(int argc, char **argv)
 				break;
 			case 's':
 				opt_stereo_width = atoi(optarg);
-				break;
-			case 'a':
-				opt_mono_keycode = strtol(optarg, NULL, 0);
-				break;
-			case 'A':
-				mono = !mono;
 				break;
 			default:
 				usage(argv[0]);
@@ -203,8 +195,6 @@ static void usage(char *exe)
 		"  -l        list available openAL audio devices\n"
 		"  -p PATH   load .wav files from directory PATH\n"
 		"  -s WIDTH  set stereo width [0..100]\n"
-		"  -a CODE   use CODE as mono switcher key (default 0x36 for R Shift)\n"
-		"  -A        start the program in mono wideness\n"
 		"  -v        increase verbosity / debugging\n",
 		exe
        );
@@ -294,27 +284,69 @@ static void handle_mute_key(int mute_key)
 	}
 }
 
-static void handle_mono_key(int mono_key)
-{
-	static time_t t_prev;
-	static int count = 0;
+/*
+ *   Generates an OGG Vorbis buffer using vorbisfile, does so dynamically.
+ */
+ALuint genOggBuffer(const char* file) {
+	ALuint outBuffer = 0;
+	OggVorbis_File vf;
+	int bitstreamCursor = 0;
+	int fFormat = 0;
+	long dataSize = 0;
 
-	if (mono_key) {
-		time_t t_now = time(NULL);
-		if (t_now - t_prev < 2) {
-			count++;
-			if (count == 2) {
-				mono = !mono;
-				printd("Mono Wideness %s", mono ? "enabled" : "disabled");
-				count = 0;
-			}
-		}
-		t_prev = t_now;
-	} else {
-		count = 0;
+	// Open ogg file
+	if (ov_fopen(file, &vf) != 0) {
+
+		// Failed to open file.
+		return 0;
 	}
-}
 
+	// Get information about ogg file
+	vorbis_info* info = ov_info(&vf, -1);
+	ogg_int64_t pcmTotal = ov_pcm_total(&vf, -1);
+	if (info->channels == 1) fFormat = AL_FORMAT_MONO16;
+	if (info->channels == 2) fFormat = AL_FORMAT_STEREO16;
+
+	// Allocate and read to buffer of data size.
+	char* fullBuffer = (char*)malloc(4096);
+	char* buffer = (char*)malloc(4096);
+
+	long oggError = 1;
+	while (oggError > 0) {
+		// Get the offset to write to next.
+		long writeOffset = dataSize;
+
+		// Read PCM data from ogg stream
+		oggError = ov_read(&vf, buffer, pcmTotal*info->channels, 0, 2, 1, &bitstreamCursor);
+		if (oggError < 0) {
+
+			// There's an error with the file, free buffers and go to fallback.
+			free(fullBuffer);
+			free(buffer);
+			ov_clear(&vf);
+			return 0;
+		}
+
+		if (oggError != 0) {
+			// oggError at this point will be the amount of bytes read.
+			dataSize += oggError;
+
+			// Reallocate storage and copy new data in.
+			fullBuffer = realloc(fullBuffer, dataSize);
+			memcpy(fullBuffer+writeOffset, buffer, oggError);
+		}
+	}
+
+	// Send to new OpenAL buffer.
+	alGenBuffers(1, &outBuffer);
+	alBufferData(outBuffer, fFormat, fullBuffer, dataSize, info->rate);
+
+	// Free everything, and unload vorbis file from memory.
+	free(fullBuffer);
+	free(buffer);
+	ov_clear(&vf);
+	return outBuffer;
+} 
 
 /*
  * Play audio file for given keycode. Wav files are loaded on demand
@@ -330,7 +362,6 @@ int play(int code, int press)
 
 	if (press) {
 		handle_mute_key(code == opt_mute_keycode);
-		handle_mono_key(code == opt_mono_keycode);
 	}
 
 	static ALuint buf[512] = { 0 };
@@ -341,11 +372,13 @@ int play(int code, int press)
 	if(src[idx] == 0) {
 
 		char fname[256];
-		snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, code, press);
+		snprintf(fname, sizeof(fname), "%s/%02x-%d.ogg", opt_path_audio, code, press);
 
 		printd("Loading audio file \"%s\"", fname);
+		buf[idx] = genOggBuffer(fname);
 
-		buf[idx] = alureCreateBufferFromFile(fname);
+		/*buf[idx] = alureCreateBufferFromFile(fname);*/
+
 		if(buf[idx] == 0) {
 
 			if(opt_fallback_sound) {
@@ -364,7 +397,12 @@ int play(int code, int press)
 		alGenSources((ALuint)1, &src[idx]);
 		TEST_ERROR("source generation");
 
+		double x = find_key_loc(code);
+		if (opt_stereo_width > 0) {
+			alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
+		}
 		alSourcef(src[idx], AL_GAIN, opt_gain / 100.0);
+		
 		alSourcei(src[idx], AL_BUFFER, buf[idx]);
 		TEST_ERROR("buffer binding");
 	}
@@ -373,15 +411,6 @@ int play(int code, int press)
 	if(src[idx] != 0 && src[idx] != SRC_INVALID) {
 		if (!muted)
 			alSourcePlay(src[idx]);
-		
-		//Handle 3D positional audio, and mono toggle.
-		double x = find_key_loc(code);
-		if (!mono && opt_stereo_width > 0) {
-                        alSource3f(src[idx], AL_POSITION, -x, 0, (100 - opt_stereo_width) / 100.0);
-                } else {
-			alSource3f(src[idx], AL_POSITION, 0, 0, 0);
-		}
-
 		TEST_ERROR("source playing");
 	}
 

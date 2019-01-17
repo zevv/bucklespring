@@ -3,7 +3,7 @@ NAME   	:= buckle
 SRC 	:= main.c
 VERSION	:= 1.4.0
 
-PATH_AUDIO ?= "./wav"
+PATH_AUDIO ?= "./ogg"
 
 CFLAGS	?= -O3 -g
 LDFLAGS ?= -g
@@ -16,26 +16,26 @@ ifdef mingw
  CROSS   := i686-w64-mingw32-
  CFLAGS  += -Iwin32/include -Iwin32/include/AL
  LDFLAGS += -mwindows -static-libgcc -static-libstdc++
- LIBS    += -Lwin32/lib -lALURE32 -lOpenAL32
+ LIBS    += -Lwin32/lib -lALURE32 -lOpenAL32 -lopus -lvorbisfile
  SRC     += scan-windows.c
 else 
  OS := $(shell uname)
  ifeq ($(OS), Darwin)
   BIN     := $(NAME)
   PKG_CONFIG_PATH := "./mac/lib/pkgconfig" 
-  LIBS    += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs alure openal)
-  CFLAGS  += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags alure openal)
+  LIBS    += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs alure openal opus vorbisfile)
+  CFLAGS  += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags alure openal opus vorbis)
   LDFLAGS += -framework ApplicationServices -framework OpenAL
   SRC     += scan-mac.c
  else
   BIN     := $(NAME)
   ifdef libinput
-   LIBS    += $(shell pkg-config --libs openal alure libinput libudev)
-   CFLAGS  += $(shell pkg-config --cflags openal alure libinput libudev)
+   LIBS    += $(shell pkg-config --libs openal opus vorbisfile alure libinput libudev)
+   CFLAGS  += $(shell pkg-config --cflags openal opus vorbis alure libinput libudev)
    SRC     += scan-libinput.c
   else
-   LIBS    += $(shell pkg-config --libs openal alure xtst x11)
-   CFLAGS  += $(shell pkg-config --cflags openal alure xtst x11)
+   LIBS    += $(shell pkg-config --libs openal opus vorbisfile alure xtst x11)
+   CFLAGS  += $(shell pkg-config --cflags openal opus vorbis alure xtst x11)
    SRC     += scan-x11.c
   endif
  endif
