@@ -40,12 +40,12 @@ libraries and header files are installed, then simply run `make`:
 
 #### Dependencies on debian
 ```
-$ sudo apt-get install libopenal-dev libalure-dev libxtst-dev
+$ sudo apt-get install libopenal-dev libalure-dev libxtst-dev libvorbis-dev
 ```
 
 #### Dependencies on arch linux
 ```
-$ sudo pacman -S openal alure libxtst
+$ sudo pacman -S openal alure libxtst libvorbis
 ```
 
 #### Building
@@ -119,6 +119,21 @@ options:
   -s WIDTH  set stereo width [0..100]
   -v        increase verbosity / debugging
 ````
+
+Ogg Vorbis notes
+------------
+
+Bucklespring (in this branch) uses the libvorbisfile vorbis loader and decoder.
+This section provides tips on how to create audio files that work with vorbis.
+
+You can convert files to .ogg via ffmpeg
+````
+ffmpeg -i file.(ext) file.ogg
+````
+
+Please do test this branch and see if everything works correctly, some problems 
+might be solved such as problems with bitrate.
+
 
 OpenAL notes
 ------------
