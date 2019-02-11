@@ -87,7 +87,12 @@ $ sudo ./buckle
 ```
 
 Note that you need superuser privileges to create the event tap on Mac OS X.
+Also give your terminal Accessibility rights: system preferences -> security -> privacy -> accessibility
 
+If you want to use buckle while doing normal work, add an & behind the command.
+```
+$ sudo ./buckle &
+```
 
 ### Windows
 
