@@ -74,9 +74,10 @@ static int opt_mute_keycode = DEFAULT_MUTE_KEYCODE;
 static const char *opt_device = NULL;
 static const char *opt_path_audio = PATH_AUDIO;
 static int muted = 0;
+static int mute_scroll = 1;
 
 
-static const char short_opts[] = "d:fg:hlm:Mp:s:v";
+static const char short_opts[] = "d:fg:hlm:Mp:Ss:v";
 
 static const struct option long_opts[] = {
 	{ "device",         required_argument, NULL, 'd' },
@@ -86,6 +87,7 @@ static const struct option long_opts[] = {
 	{ "list-devices",   no_argument,       NULL, 'l' },
 	{ "mute-keycode",   required_argument, NULL, 'm' },
 	{ "mute",           no_argument,       NULL, 'M' },
+	{ "unmute-scroll",  no_argument,       NULL, 'S' },
 	{ "audio-path",     required_argument, NULL, 'p' },
 	{ "stereo-width",   required_argument, NULL, 'w' },
 	{ "verbose",        no_argument,       NULL, 'v' },
@@ -129,6 +131,9 @@ int main(int argc, char **argv)
 				break;
 			case 's':
 				opt_stereo_width = atoi(optarg);
+				break;
+			case 'S':
+				mute_scroll = 0;
 				break;
 			case 'v':
 				opt_verbose++;
@@ -210,6 +215,7 @@ static void usage(char *exe)
 		"  -g, --gain=GAIN           set playback gain [0..100]\n"
 		"  -m, --mute-keycode=CODE   use CODE as mute key (default 0x46 for scroll lock)\n"
 		"  -M, --mute                start the program muted\n"
+		"  -S, --unmute-scroll       unmute the scrolling sound\n"
 		"  -h, --help                show help\n"
 		"  -l, --list-devices        list available openAL audio devices\n"
 		"  -p, --audi-path=PATH      load .wav files from directory PATH\n"
@@ -364,8 +370,10 @@ int play(int code, int press)
 
 
 	if(src[idx] != 0 && src[idx] != SRC_INVALID) {
-		if (!muted)
-			alSourcePlay(src[idx]);
+		if(!muted)
+			if(!mute_scroll || code != 0xff)
+				alSourcePlay(src[idx]);
+
 		TEST_ERROR("source playing");
 	}
 
