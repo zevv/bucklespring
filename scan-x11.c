@@ -77,10 +77,12 @@ void key_pressed_cb(XPointer arg, XRecordInterceptData *d)
 				play(key, 0);
 				break;
 			case ButtonPress:
-				play(0xff, 1);
+				if(key == -5 || key == -7)
+					printf("%d\n", key);
 				break;
 			case ButtonRelease:
-				play(0xff, 0);
+				if(key == -5 || key == -7)
+					play(0xff, 0);
 				break;
 			default:
 				break;
