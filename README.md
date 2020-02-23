@@ -38,14 +38,19 @@ $ sudo apt-get install bucklespring
 To compile on debian-based linux distributions, first make sure the require
 libraries and header files are installed, then simply run `make`:
 
-#### Dependencies on debian
+#### Dependencies on Debian
 ```
 $ sudo apt-get install libopenal-dev libalure-dev libxtst-dev
 ```
 
-#### Dependencies on arch linux
+#### Dependencies on Arch Linux
 ```
 $ sudo pacman -S openal alure libxtst
+```
+
+#### Dependencies on Fedora Linux
+```
+$ sudo dnf install gcc openal-soft-devel alure-devel libX11-devel libXtst-devel
 ```
 
 #### Building
@@ -63,7 +68,7 @@ require special permissions for buckle to open the devices, though. Build with
 $ make libinput=1
 ```
 
-#### Using snap on Ubuntu (since 16.04) and other distros 
+#### Using snap on Ubuntu (since 16.04) and other distros
 
 ```
 $ sudo snap install bucklespring
@@ -97,7 +102,7 @@ $ sudo ./buckle &
 ### Windows
 
 I think the windows build is currently broken, it seems that switching from
-Freelut to Alure broke windows, I might fix this one day. 
+Freelut to Alure broke windows, I might fix this one day.
 
 I suspect there is something wrong with `alureCreateBufferFromFile()` getting
 called from another thread in the key capture callback, but my knowledge of the
@@ -133,7 +138,7 @@ Bucklespring uses the OpenAL library for mixing samples and providing a
 realistic 3D audio playback. This section contains some tips and tricks for
 properly tuning OpenAL for bucklespring.
 
-* The default OpenAL settings can cause a slight delay in playback. Edit or create 
+* The default OpenAL settings can cause a slight delay in playback. Edit or create
   the OpenAL configuration file `~/.alsoftrc` and add the following options:
 
  ````
@@ -141,18 +146,18 @@ properly tuning OpenAL for bucklespring.
  periods = 4
  ````
 
-* If you are using headphones, enabling the head-related-transfer functions in OpenAL 
+* If you are using headphones, enabling the head-related-transfer functions in OpenAL
   for a better 3D sound:
 
  ````
  hrtf = true
  ````
- 
-* When starting an OpenAL application, the internal sound card is selected for output, 
-  and you might not be able to change the device using pavucontrol. The option to select 
-  an alternate device is present, but choosing the device has no effect. To solve this, 
+
+* When starting an OpenAL application, the internal sound card is selected for output,
+  and you might not be able to change the device using pavucontrol. The option to select
+  an alternate device is present, but choosing the device has no effect. To solve this,
   add the following option to the OpenAL configuration file:
- 
+
  ````
  allow-moves = true
  ````
