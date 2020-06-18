@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 
             case 'c':
 				opt_fallback_sound = 1;
-				opt_path_audio = "cherrymxbluesounds";
+				opt_path_audio = PATH_CHERRY_MX_BLUE_AUDIO;
 			case 'd':
 				opt_device = optarg;
 				break;
