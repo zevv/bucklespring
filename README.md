@@ -87,17 +87,16 @@ the following should do:
 ```
 $ brew install alure pkg-config
 $ git clone https://github.com/zevv/bucklespring.git && cd bucklespring
-$ sed -i '' 's/-Wall -Werror/-Wall/' Makefile
 $ make
 $ ./buckle
 ```
 
-Note that you need superuser privileges to create the event tap on Mac OS X.
+Note that you might need superuser privileges to create the event tap on Mac OS X.
 Also give your terminal Accessibility rights: system preferences -> security -> privacy -> accessibility
 
 If you want to use buckle while doing normal work, add an & behind the command.
 ```
-$ sudo ./buckle &
+$ ./buckle &
 ```
 
 ### Windows
