@@ -21,6 +21,9 @@ ScrollLock twice (but be aware that those ScrollLock events _are_ delivered to
 the application); same to unmute. The keycode for muting can be changed with
 the `-m` option. Use keycode 0 to disable the mute function.
 
+You can also use cherry mx blue sounds, pulled from the
+keyclacker project https://github.com/spajus/keyclacker
+
 Installation
 ------------
 
@@ -162,3 +165,4 @@ properly tuning OpenAL for bucklespring.
  ````
  allow-moves = true
  ````
+
