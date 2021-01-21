@@ -87,8 +87,9 @@ the following should do:
 ```
 $ brew install alure pkg-config
 $ git clone https://github.com/zevv/bucklespring.git && cd bucklespring
+$ sed -i '' 's/-Wall -Werror/-Wall/' Makefile
 $ make
-$ sudo ./buckle
+$ ./buckle
 ```
 
 Note that you need superuser privileges to create the event tap on Mac OS X.
