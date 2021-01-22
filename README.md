@@ -33,6 +33,14 @@ install with
 $ sudo apt-get install bucklespring
 ```
 
+### VoidLinux
+
+Bucklespring is available in the VoidLinux repositories, so you can install with
+
+```
+$ sudo xbps-install -S bucklespring
+```
+
 ### Linux, building from source
 
 To compile on debian-based linux distributions, first make sure the require
