@@ -211,8 +211,8 @@ static void usage(char *exe)
 		"  -m, --mute-keycode=CODE   use CODE as mute key (default 0x46 for scroll lock)\n"
 		"  -M, --mute                start the program muted\n"
 		"  -h, --help                show help\n"
-		"  -l, --list-devices        list available openAL audio devices\n"
-		"  -p, --audi-path=PATH      load .wav files from directory PATH\n"
+		"  -l, --list-devices        list available OpenAL audio devices\n"
+		"  -p, --audio-path=PATH     load .wav files from directory PATH\n"
 		"  -s, --stereo-width=WIDTH  set stereo width [0..100]\n"
 		"  -v, --verbose             increase verbosity / debugging\n",
 		exe
