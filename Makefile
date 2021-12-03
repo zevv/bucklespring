@@ -4,12 +4,14 @@ SRC 	:= main.c
 VERSION	:= 1.5.1
 
 PATH_AUDIO ?= "./wav"
+PATH_CHERRY_MX_BLUE_AUDIO ?= "./cherrymxbluesounds"
 
 CFLAGS	?= -O3 -g
 LDFLAGS ?= -g
 CFLAGS  += -Wall -Werror 
 CFLAGS  += -DVERSION=\"$(VERSION)\"
 CFLAGS  += -DPATH_AUDIO=\"$(PATH_AUDIO)\"
+CFLAGS  += -DPATH_CHERRY_MX_BLUE_AUDIO=\"$(PATH_CHERRY_MX_BLUE_AUDIO)\"
 
 ifdef mingw
  BIN     := $(NAME).exe
