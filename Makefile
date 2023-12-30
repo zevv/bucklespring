@@ -1,7 +1,7 @@
 
 NAME   	:= buckle
 SRC 	:= main.c
-VERSION	:= 1.4.0
+VERSION	:= 1.5.1
 
 PATH_AUDIO ?= "./wav"
 
