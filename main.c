@@ -88,7 +88,7 @@ static const struct option long_opts[] = {
 	{ "mute-keycode",   required_argument, NULL, 'm' },
 	{ "mute",           no_argument,       NULL, 'M' },
 	{ "audio-path",     required_argument, NULL, 'p' },
-	{ "stereo-width",   required_argument, NULL, 'w' },
+	{ "stereo-width",   required_argument, NULL, 's' },
 	{ "no-click",       no_argument,       NULL, 'c' },
 	{ "verbose",        no_argument,       NULL, 'v' },
         { 0, 0, 0, 0 }
