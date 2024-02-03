@@ -65,7 +65,7 @@ libraries and header files are installed, then simply run `make`:
 
 #### Dependencies on Debian
 ```
-$ sudo apt-get install libopenal-dev libalure-dev libxtst-dev
+$ sudo apt-get install libopenal-dev libalure-dev libxtst-dev pkg-config
 ```
 
 #### Dependencies on Arch Linux
