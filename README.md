@@ -149,6 +149,8 @@ options:
   -g GAIN   set playback gain [0..100]
   -m CODE   use CODE as mute key (default 0x46 for scroll lock)
   -M        start the program muted
+  -c        don't play a sound on mouse click
+  -k        don't play a sound on keyboard press
   -h        show help
   -l        list available openAL audio devices
   -p PATH   load .wav files from directory PATH
