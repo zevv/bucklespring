@@ -1,13 +1,12 @@
-
-NAME   	:= buckle
-SRC 	:= main.c
-VERSION	:= 1.5.1
+NAME    := buckle
+SRC     := main.c
+VERSION := 1.5.1
 
 PATH_AUDIO ?= "./wav"
 
-CFLAGS	?= -O3 -g
+CFLAGS  ?= -O3 -g
 LDFLAGS ?= -g
-CFLAGS  += -Wall -Werror 
+CFLAGS  += -Wall -Werror -fPIC
 CFLAGS  += -DVERSION=\"$(VERSION)\"
 CFLAGS  += -DPATH_AUDIO=\"$(PATH_AUDIO)\"
 
@@ -42,15 +41,15 @@ else
 endif
 
 OBJS    = $(subst .c,.o, $(SRC))
-CC 	?= $(CROSS)gcc
-LD 	?= $(CROSS)gcc
-CCLD 	?= $(CC)
-STRIP 	= $(CROSS)strip
+CC      ?= $(CROSS)gcc
+LD      ?= $(CROSS)gcc
+CCLD    ?= $(CC)
+STRIP   = $(CROSS)strip
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(BIN):	$(OBJS)
+$(BIN): $(OBJS)
 	$(CCLD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 dist:
@@ -63,7 +62,19 @@ rec: rec.c
 	gcc -Wall -Werror rec.c -o rec
 
 clean:
-	$(RM) $(OBJS) $(BIN) core rec
+	$(RM) $(OBJS) $(BIN) core rec libbuckle.so
 
 strip: $(BIN)
 	$(STRIP) $(BIN)
+    
+libbuckle.so: $(OBJS)
+	$(CC) -shared -o libbuckle.so $(OBJS) $(LIBS)
+
+main.o: main.c
+	$(CC) $(CFLAGS) -c main.c -o main.o
+
+rec.o: rec.c
+	$(CC) $(CFLAGS) -c rec.c -o rec.o
+
+scan-x11.o: scan-x11.c
+	$(CC) $(CFLAGS) -c scan-x11.c -o scan-x11.o
