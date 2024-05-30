@@ -7,7 +7,7 @@ PATH_AUDIO ?= "./wav"
 
 CFLAGS	?= -O3 -g
 LDFLAGS ?= -g
-CFLAGS  += -Wall -Werror 
+CFLAGS  += -Wall 
 CFLAGS  += -DVERSION=\"$(VERSION)\"
 CFLAGS  += -DPATH_AUDIO=\"$(PATH_AUDIO)\"
 
@@ -60,7 +60,7 @@ dist:
 	rm -rf $(NAME)-$(VERSION)
 
 rec: rec.c
-	gcc -Wall -Werror rec.c -o rec
+	gcc -Wall rec.c -o rec
 
 clean:
 	$(RM) $(OBJS) $(BIN) core rec

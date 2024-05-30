@@ -20,6 +20,7 @@
 #endif
 
 #include "buckle.h"
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 #define SRC_INVALID INT_MAX
 #define DEFAULT_MUTE_KEYCODE 0x46 /* Scroll Lock */
