@@ -43,6 +43,15 @@ static void handle_key(struct libinput_event *ev)
 	play(key, state == LIBINPUT_KEY_STATE_PRESSED);
 }
 
+static void handle_click(struct libinput_event *ev)
+{
+	struct libinput_event_pointer *k = libinput_event_get_pointer_event(ev);
+	enum libinput_button_state state = libinput_event_pointer_get_button_state(k);
+	uint32_t key = 0xff;
+
+	play(key, state == LIBINPUT_BUTTON_STATE_PRESSED);
+}
+
 static void handle_events(struct libinput *li)
 {
 	struct libinput_event *ev;
@@ -54,6 +63,9 @@ static void handle_events(struct libinput *li)
 		switch(libinput_event_get_type(ev)) {
 			case LIBINPUT_EVENT_KEYBOARD_KEY:
 				handle_key(ev);
+				break;
+			case LIBINPUT_EVENT_POINTER_BUTTON:
+				handle_click(ev);
 				break;
 			default:
 				break;
