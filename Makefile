@@ -2,7 +2,10 @@
 NAME   	:= buckle
 SRC 	:= main.c
 VERSION	:= 1.5.1
-
+# CC := gcc
+ifeq ($(OS),Windows_NT)
+CC := i686-w64-mingw32-gcc
+endif
 PATH_AUDIO ?= "./wav"
 
 CFLAGS	?= -O3 -g
@@ -11,14 +14,14 @@ CFLAGS  += -Wall -Werror
 CFLAGS  += -DVERSION=\"$(VERSION)\"
 CFLAGS  += -DPATH_AUDIO=\"$(PATH_AUDIO)\"
 
-ifdef mingw
+ ifeq ($(OS),Windows_NT)
  BIN     := $(NAME).exe
- CROSS   := i686-w64-mingw32-
- CFLAGS  += -Iwin32/include -Iwin32/include/AL
- LDFLAGS += -mwindows -static-libgcc -static-libstdc++
- LIBS    += -Lwin32/lib -lALURE32 -lOpenAL32
- SRC     += scan-windows.c
-else 
+ CFLAGS  += -I"win32/include"
+# LDFLAGS += -mwindows -static-libgcc -static-libstdc++
+ LDFLAGS += -static-libgcc -static-libstdc++
+ LIBS    += -L"win32/lib" -lALURE32 -lOpenAL32
+ SRC     += scan-windows.c 
+else
  OS := $(shell uname)
  ifeq ($(OS), Darwin)
   BIN     := $(NAME)
