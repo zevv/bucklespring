@@ -16,6 +16,7 @@
 #include <OpenAL/alure.h>
 #else
 #include <AL/al.h>
+#include <AL/alc.h>
 #include <AL/alure.h>
 #endif
 
