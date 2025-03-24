@@ -127,13 +127,9 @@ $ sudo ./buckle &
 
 ### Windows
 
-I think the windows build is currently broken, it seems that switching from
-Freelut to Alure broke windows, I might fix this one day.
+[The program has been compiled](https://github.com/Matin6725/bucklespring-Windows/releases/tag/bucklespring-Windows), but it has not yet received Microsoft's security certificate. Therefore, it may be detected as a virus by some antivirus software. To view reports from some antivirus programs, you can visit [link to reports](https://www.virustotal.com/gui/file/fe4a813c39793515d726311da50b9ac5e64e6d87ab21c8a16b8980b756a4e07b?nocache=1).
 
-I suspect there is something wrong with `alureCreateBufferFromFile()` getting
-called from another thread in the key capture callback, but my knowledge of the
-win32 platform is so poor I'm not even able to run a debugger to see what is
-happening. Help from an expert is much appreciated.
+For better performance and to resolve some issues, it is recommended to run the program in **Administrator** mode.
 
 
 Usage
