@@ -68,6 +68,7 @@ static double midloc[] = {
 
 static int opt_verbose = 0;
 static int opt_no_click = 0;
+static int opt_no_keyboard = 0;
 static int opt_stereo_width = 50;
 static int opt_gain = 100;
 static int opt_fallback_sound = 0;
@@ -77,7 +78,7 @@ static const char *opt_path_audio = PATH_AUDIO;
 static int muted = 0;
 
 
-static const char short_opts[] = "d:fg:hlm:Mp:s:cv";
+static const char short_opts[] = "d:fg:hlm:Mp:s:ckv";
 
 static const struct option long_opts[] = {
 	{ "device",         required_argument, NULL, 'd' },
@@ -90,6 +91,7 @@ static const struct option long_opts[] = {
 	{ "audio-path",     required_argument, NULL, 'p' },
 	{ "stereo-width",   required_argument, NULL, 's' },
 	{ "no-click",       no_argument,       NULL, 'c' },
+	{ "no-keyboard",    required_argument, NULL, 'k' },
 	{ "verbose",        no_argument,       NULL, 'v' },
         { 0, 0, 0, 0 }
 };
@@ -134,6 +136,9 @@ int main(int argc, char **argv)
 				break;
 			case 'c':
 				opt_no_click++;
+				break;
+			case 'k':
+				opt_no_keyboard++;
 				break;
 			case 'v':
 				opt_verbose++;
@@ -216,6 +221,7 @@ static void usage(char *exe)
 		"  -m, --mute-keycode=CODE   use CODE as mute key (default 0x46 for scroll lock)\n"
 		"  -M, --mute                start the program muted\n"
 		"  -c, --no-click            don't play a sound on mouse click\n"
+		"  -k, --no-keyboard         don't play a sound on keyboard press\n"
 		"  -h, --help                show help\n"
 		"  -l, --list-devices        list available OpenAL audio devices\n"
 		"  -p, --audio-path=PATH     load .wav files from directory PATH\n"
@@ -322,6 +328,7 @@ int play(int code, int press)
 	printd("scancode %d/0x%x", code, code);
 
 	if (code == 0xff && opt_no_click) return 0;
+	if (code != 0xff && opt_no_keyboard) return 0;
 
 	/* Check for mute sequence: ScrollLock down+up+down */
 
