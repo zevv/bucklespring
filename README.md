@@ -1,5 +1,4 @@
-Nostalgia bucklespring keyboard sound
-=====================================
+# Nostalgia bucklespring keyboard sound
 
 Copyright 2016 Ico Doornekamp
 
@@ -21,8 +20,7 @@ ScrollLock twice (but be aware that those ScrollLock events _are_ delivered to
 the application); same to unmute. The keycode for muting can be changed with
 the `-m` option. Use keycode 0 to disable the mute function.
 
-Installation
-------------
+## Installation
 
 [![Packaging status](https://repology.org/badge/tiny-repos/bucklespring.svg)](https://repology.org/project/bucklespring/versions)
 
@@ -64,21 +62,25 @@ To compile on debian-based linux distributions, first make sure the require
 libraries and header files are installed, then simply run `make`:
 
 #### Dependencies on Debian
+
 ```
 $ sudo apt-get install libopenal-dev libalure-dev libxtst-dev pkg-config
 ```
 
 #### Dependencies on Arch Linux
+
 ```
 $ sudo pacman -S openal alure libxtst
 ```
 
 #### Dependencies on Fedora Linux
+
 ```
 $ sudo dnf install gcc openal-soft-devel alure-devel libX11-devel libXtst-devel
 ```
 
 #### Building
+
 ```
 $ make
 $ ./buckle
@@ -103,27 +105,39 @@ $ bucklespring.buckle
 The snap includes the OpenAL configuration tweaks mentioned in this README.
 See http://snapcraft.io/ for more info about Snap packages
 
-
 ### MacOS
 
-I've heard rumours that bucklespring also runs on MacOS. I've been told that
-the following should do:
+Bucklespring builds and runs on macOS without any external dependencies. The ALURE library dependency has been removed and replaced with a built-in WAV file loader.
 
 ```
-$ brew install alure pkg-config
 $ git clone https://github.com/zevv/bucklespring.git && cd bucklespring
-$ sed -i '' 's/-Wall -Werror/-Wall/' Makefile
 $ make
 $ ./buckle
 ```
 
-Note that you need superuser privileges to create the event tap on Mac OS X.
-Also give your terminal Accessibility rights: system preferences -> security -> privacy -> accessibility
+**System Requirements:**
 
-If you want to use buckle while doing normal work, add an & behind the command.
+- macOS with built-in OpenAL framework (included since macOS 10.4)
+- No additional package installation required
+
+**Permissions:**
+
+- You need superuser privileges to create the event tap on macOS
+- Grant your terminal Accessibility rights: System Preferences → Security & Privacy → Accessibility
+
+**Usage:**
+
+```
+$ sudo ./buckle
+```
+
+If you want to use buckle while doing normal work, add an & behind the command:
+
 ```
 $ sudo ./buckle &
 ```
+
+**Note:** The build may show deprecation warnings for OpenAL functions since macOS 10.15, as Apple recommends AVAudioEngine for new applications. However, OpenAL continues to work perfectly for existing applications like bucklespring.
 
 ### Windows
 
@@ -135,11 +149,9 @@ called from another thread in the key capture callback, but my knowledge of the
 win32 platform is so poor I'm not even able to run a debugger to see what is
 happening. Help from an expert is much appreciated.
 
+## Usage
 
-Usage
------
-
-````
+```
 usage: ./buckle [options]
 
 options:
@@ -154,36 +166,34 @@ options:
   -p PATH   load .wav files from directory PATH
   -s WIDTH  set stereo width [0..100]
   -v        increase verbosity / debugging
-````
+```
 
-OpenAL notes
-------------
-
+## OpenAL notes
 
 Bucklespring uses the OpenAL library for mixing samples and providing a
 realistic 3D audio playback. This section contains some tips and tricks for
 properly tuning OpenAL for bucklespring.
 
-* The default OpenAL settings can cause a slight delay in playback. Edit or create
+- The default OpenAL settings can cause a slight delay in playback. Edit or create
   the OpenAL configuration file `~/.alsoftrc` and add the following options:
 
- ````
- period_size = 32
- periods = 4
- ````
+```
+period_size = 32
+periods = 4
+```
 
-* If you are using headphones, enabling the head-related-transfer functions in OpenAL
+- If you are using headphones, enabling the head-related-transfer functions in OpenAL
   for a better 3D sound:
 
- ````
- hrtf = true
- ````
+```
+hrtf = true
+```
 
-* When starting an OpenAL application, the internal sound card is selected for output,
+- When starting an OpenAL application, the internal sound card is selected for output,
   and you might not be able to change the device using pavucontrol. The option to select
   an alternate device is present, but choosing the device has no effect. To solve this,
   add the following option to the OpenAL configuration file:
 
- ````
- allow-moves = true
- ````
+```
+allow-moves = true
+```
