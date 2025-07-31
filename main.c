@@ -13,10 +13,10 @@
 
 #ifdef __APPLE__
 #include <OpenAL/al.h>
-#include <OpenAL/alure.h>
+#include <OpenAL/alc.h>
 #else
 #include <AL/al.h>
-#include <AL/alure.h>
+#include <AL/alc.h>
 #endif
 
 #include "buckle.h"
@@ -35,6 +35,10 @@
 static void usage(char *exe);
 static void list_devices(void);
 static double find_key_loc(int code);
+
+/* Simple WAV file loader to replace ALURE functionality */
+static ALuint load_wav_file(const char *filename);
+static const char* get_audio_error_string(void);
 
 
 
@@ -94,7 +98,80 @@ static const struct option long_opts[] = {
         { 0, 0, 0, 0 }
 };
 
+/* Simple WAV file loader implementation */
+static ALuint load_wav_file(const char *filename) {
+    FILE *file = fopen(filename, "rb");
+    if (!file) {
+        return 0;
+    }
+    
+    char header[44];
+    if (fread(header, 1, 44, file) != 44) {
+        fclose(file);
+        return 0;
+    }
+    
+    // Basic WAV header validation
+    if (strncmp(header, "RIFF", 4) != 0 || strncmp(header + 8, "WAVE", 4) != 0) {
+        fclose(file);
+        return 0;
+    }
+    
+    // Extract audio parameters from header
+    int channels = *(short*)(header + 22);
+    int sample_rate = *(int*)(header + 24);
+    int bits_per_sample = *(short*)(header + 34);
+    int data_size = *(int*)(header + 40);
+    
+    // Only support 16-bit mono audio for simplicity
+    if (channels != 1 || bits_per_sample != 16) {
+        fclose(file);
+        return 0;
+    }
+    
+    // Read audio data
+    char *data = malloc(data_size);
+    if (!data) {
+        fclose(file);
+        return 0;
+    }
+    
+    if (fread(data, 1, data_size, file) != data_size) {
+        free(data);
+        fclose(file);
+        return 0;
+    }
+    
+    fclose(file);
+    
+    // Create OpenAL buffer
+    ALuint buffer;
+    alGenBuffers(1, &buffer);
+    alBufferData(buffer, AL_FORMAT_MONO16, data, data_size, sample_rate);
+    
+    free(data);
+    
+    ALenum error = alGetError();
+    if (error != AL_NO_ERROR) {
+        alDeleteBuffers(1, &buffer);
+        return 0;
+    }
+    
+    return buffer;
+}
 
+static const char* get_audio_error_string(void) {
+    ALenum error = alGetError();
+    switch (error) {
+        case AL_NO_ERROR: return "No error";
+        case AL_INVALID_NAME: return "Invalid name";
+        case AL_INVALID_ENUM: return "Invalid enum";
+        case AL_INVALID_VALUE: return "Invalid value";
+        case AL_INVALID_OPERATION: return "Invalid operation";
+        case AL_OUT_OF_MEMORY: return "Out of memory";
+        default: return "Unknown error";
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -341,14 +418,14 @@ int play(int code, int press)
 
 		printd("Loading audio file \"%s\"", fname);
 
-		buf[idx] = alureCreateBufferFromFile(fname);
+		buf[idx] = load_wav_file(fname);
 		if(buf[idx] == 0) {
 
 			if(opt_fallback_sound) {
 				snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, 0x31, press);
-				buf[idx] = alureCreateBufferFromFile(fname);
+				buf[idx] = load_wav_file(fname);
 			} else {
-				fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, alureGetErrorString());
+				fprintf(stderr, "Error opening audio file \"%s\": %s\n", fname, get_audio_error_string());
 			}
 
 			if(buf[idx] == 0) {

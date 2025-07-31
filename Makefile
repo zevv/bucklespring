@@ -7,7 +7,7 @@ PATH_AUDIO ?= "./wav"
 
 CFLAGS	?= -O3 -g
 LDFLAGS ?= -g
-CFLAGS  += -Wall -Werror 
+CFLAGS  += -Wall 
 CFLAGS  += -DVERSION=\"$(VERSION)\"
 CFLAGS  += -DPATH_AUDIO=\"$(PATH_AUDIO)\"
 
@@ -22,9 +22,6 @@ else
  OS := $(shell uname)
  ifeq ($(OS), Darwin)
   BIN     := $(NAME)
-  PKG_CONFIG_PATH := "./mac/lib/pkgconfig" 
-  LIBS    += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs alure openal)
-  CFLAGS  += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags alure openal)
   LDFLAGS += -framework ApplicationServices -framework OpenAL
   SRC     += scan-mac.c
  else
@@ -60,7 +57,7 @@ dist:
 	rm -rf $(NAME)-$(VERSION)
 
 rec: rec.c
-	gcc -Wall -Werror rec.c -o rec
+	gcc -Wall rec.c -o rec
 
 clean:
 	$(RM) $(OBJS) $(BIN) core rec
