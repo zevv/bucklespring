@@ -11,14 +11,9 @@
 #include <getopt.h>
 #include <time.h>
 
-#ifdef __APPLE__
-#include <OpenAL/al.h>
-#include <OpenAL/alure.h>
-#else
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <AL/alure.h>
-#endif
 
 #include "buckle.h"
 

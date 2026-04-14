@@ -106,19 +106,21 @@ See http://snapcraft.io/ for more info about Snap packages
 
 ### MacOS
 
-I've heard rumours that bucklespring also runs on MacOS. I've been told that
-the following should do:
+Since `alure` is no longer available in Homebrew, a setup script is provided to
+build the dependencies locally:
 
 ```
-$ brew install alure pkg-config
 $ git clone https://github.com/zevv/bucklespring.git && cd bucklespring
-$ sed -i '' 's/-Wall -Werror/-Wall/' Makefile
+$ ./setup-macos.sh
 $ make
-$ ./buckle
+$ sudo ./buckle
 ```
+
+The setup script will install `openal-soft` and `cmake` via Homebrew, then
+download and build `alure` from source.
 
 Note that you need superuser privileges to create the event tap on Mac OS X.
-Also give your terminal Accessibility rights: system preferences -> security -> privacy -> accessibility
+Also give your terminal Accessibility rights: System Preferences -> Security & Privacy -> Privacy -> Accessibility
 
 If you want to use buckle while doing normal work, add an & behind the command.
 ```

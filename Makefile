@@ -27,7 +27,7 @@ else
   PKG_CONFIG_PATH := "./mac/lib/pkgconfig" 
   LIBS    += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs alure openal)
   CFLAGS  += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags alure openal)
-  LDFLAGS += -framework ApplicationServices -framework OpenAL
+  LDFLAGS += -framework ApplicationServices -Wl,-rpath,@executable_path/mac/lib -Wl,-rpath,/opt/homebrew/opt/openal-soft/lib
   SRC     += scan-mac.c
  else
   BIN     := $(NAME)
