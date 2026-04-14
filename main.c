@@ -127,9 +127,13 @@ int main(int argc, char **argv)
 			case 'M':
 				muted = !muted;
 				break;
-			case 'p':
+			case 'p': {
+				size_t len = strlen(optarg);
+				if (len > 1 && optarg[len - 1] == '/')
+					optarg[len - 1] = '\0';
 				opt_path_audio = optarg;
 				break;
+			}
 			case 's':
 				opt_stereo_width = atoi(optarg);
 				break;
@@ -321,6 +325,9 @@ int play(int code, int press)
 	ALCenum error;
 
 	printd("scancode %d/0x%x", code, code);
+
+	/* Scanner couldn't map this physical key (e.g. Fn/Globe on mac) — drop silently. */
+	if (code == 0) return 0;
 
 	if (code == 0xff && opt_no_click) return 0;
 
