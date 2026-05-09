@@ -50,7 +50,7 @@ static int keyloc[][32] = {
 	{ 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x2b, 0x4f, 0x50, 0x51, 0x60, -1 },
 	{ 0x3a, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x1c, 0x52, 0x53, -1 },
 	{ 0x2a, 0x56, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, -1 },
-	{ 0x1d, 0x7d, 0x5b, 0x38, 0x39, 0x64, 0x61, 0x67, -1 },
+	{ 0x1d, 0x7d, 0x5b, 0x38, 0x39, 0x64, 0x7e, 0x61, 0x67, -1 },
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x69, 0x6c, 0x6a, -1 },
 };
 
@@ -313,6 +313,28 @@ static void handle_mute_key(int mute_key)
 
 
 /*
+ * Right-side modifier keys (RCtrl, RAlt, RMeta) share a keyswitch type with
+ * their left counterparts — same recorded sound, different stereo position.
+ * Route wav lookup to the L-counterpart's file so third-party sound packs
+ * that only provide L-variants (e.g. klack-converted packs, or bucklespring's
+ * own baseline where 7e-*.wav was never recorded) work out of the box.
+ * Position lookup via find_key_loc(code) still uses the full code, so L/R
+ * pan to their own speakers. Shift stays distinct (LShift=0x2a, RShift=0x36
+ * have distinct recordings on the Model-M).
+ */
+static int wav_code_of(int code)
+{
+	switch (code) {
+		case 0x61: return 0x1d;  /* RCtrl → LCtrl wav */
+		case 0x64: return 0x38;  /* RAlt  → LAlt  wav */
+		case 0x7e: return 0x5b;  /* RMeta → LMeta wav */
+		case 0xfe: return 0x1c;  /* synthetic scancode for macOS NX_SYSDEFINED (consumer/media keys, Karabiner consumer_key_code) → Enter click */
+		default:   return code;
+	}
+}
+
+
+/*
  * Play audio file for given keycode. Wav files are loaded on demand
  */
 
@@ -338,7 +360,7 @@ int play(int code, int press)
 	if(src[idx] == 0) {
 
 		char fname[256];
-		snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, code, press);
+		snprintf(fname, sizeof(fname), "%s/%02x-%d.wav", opt_path_audio, wav_code_of(code), press);
 
 		printd("Loading audio file \"%s\"", fname);
 

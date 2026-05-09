@@ -1,5 +1,9 @@
 #include <ApplicationServices/ApplicationServices.h>
+#import <Cocoa/Cocoa.h>
+#include <IOKit/hidsystem/ev_keymap.h>   /* NX_SYSDEFINED, NX_SUBTYPE_AUX_CONTROL_BUTTONS, NX_KEYTYPE_* */
 #include "buckle.h"
+
+#define SCANCODE_SYSDEFINED 0xfe
 
 /* 
  * From https://www.virtualbox.org/svn/vbox/trunk/src/VBox/Frontends/VirtualBox/src/platform/darwin/DarwinKeyboard.cpp 
@@ -62,15 +66,15 @@ static const int mactoset1[] =
 	0x0e,            /* QZ_BACKSPACE    0x33 */
 	0x9c,            /* QZ_IBOOK_ENTER  0x34 */
 	0x01,            /* QZ_ESCAPE       0x35 */
-	0x5c,            /* QZ_RMETA        0x36 */
+	0x7e,            /* QZ_RMETA        0x36 (evdev RMETA; positions at R of space) */
 	0x5b,            /* QZ_LMETA        0x37 */
 	0x2a,            /* QZ_LSHIFT       0x38 */
 	0x3a,            /* QZ_CAPSLOCK     0x39 */
 	0x38,            /* QZ_LALT         0x3A */
 	0x1d,            /* QZ_LCTRL        0x3B */
 	0x36,            /* QZ_RSHIFT       0x3C */
-	0x38,            /* QZ_RALT         0x3D */
-	0x1d,            /* QZ_RCTRL        0x3E */
+	0x64,            /* QZ_RALT         0x3D (evdev RALT) */
+	0x61,            /* QZ_RCTRL        0x3E (evdev RCTRL) */
 	0,               /*                      */
 	0,               /*                      */
 	0x53,            /* QZ_KP_PERIOD    0x41 */
@@ -146,10 +150,45 @@ static const int mactoset1[] =
  * Adapted from https://danielbeard.wordpress.com/2010/10/29/listening-for-global-keypresses-in-osx/ 
  */
 
+/*
+ * Modifier keys (shift/ctrl/alt/cmd/capslock) emit kCGEventFlagsChanged, which
+ * carries no press/release bit. The global flag mask (kCGEventFlagMaskShift etc.)
+ * is unreliable when both L+R of a modifier are held, so we track press state
+ * per Mac keycode and toggle on each flagsChanged event.
+ */
+static int keystate[128];
+
 CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
 {
-	if ((type != kCGEventKeyDown) && (type != kCGEventKeyUp))
+	if (type != kCGEventKeyDown && type != kCGEventKeyUp
+	    && type != kCGEventFlagsChanged && (int)type != NX_SYSDEFINED)
 		return event;
+
+	/*
+	 * Consumer/media keys (volume, brightness, play/pause, headphone remote)
+	 * and anything Karabiner-Elements maps via `consumer_key_code` arrive as
+	 * NX_SYSDEFINED with subtype NX_SUBTYPE_AUX_CONTROL_BUTTONS, not as
+	 * kCGEventKeyDown. The original physical key is unrecoverable (Karabiner
+	 * seizes the device before the tap sees anything), so collapse all such
+	 * events onto a synthetic scancode 0xfe; wav_code_of() in main.c routes
+	 * that to wav/1c-*.wav (Enter click), and find_key_loc() returns 0
+	 * (center pan) because 0xfe is not in keyloc[][].
+	 */
+	if ((int)type == NX_SYSDEFINED) {
+		NSEvent *ns = [NSEvent eventWithCGEvent:event];
+		if (ns.subtype != NX_SUBTYPE_AUX_CONTROL_BUTTONS)
+			return event;
+		int32_t data1 = (int32_t)ns.data1;
+		int keyFlags  = (data1 >> 8) & 0xff;
+		int repeat    = data1 & 0x1;
+		if (keyFlags != 0x0A && keyFlags != 0x0B)
+			return event;
+		int press = (keyFlags == 0x0A);
+		if (press && repeat)
+			return event;                /* match keyDown autorepeat filter */
+		play(SCANCODE_SYSDEFINED, press);
+		return event;
+	}
 
 	int mackeycode = (int)CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
 	printd("Mac keycode: %d", mackeycode);
@@ -159,16 +198,21 @@ CGEventRef myCGEventCallback(CGEventTapProxy proxy, CGEventType type, CGEventRef
 
 	int key = mactoset1[mackeycode];
 
-	if (CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat))
-		return event;
-
 	switch (type) {
 		case kCGEventKeyDown:
+			if (CGEventGetIntegerValueField(event, kCGKeyboardEventAutorepeat))
+				return event;
 			play(key, 1);
 			break;
 		case kCGEventKeyUp:
 			play(key, 0);
 			break;
+		case kCGEventFlagsChanged: {
+			int press = !keystate[mackeycode];
+			keystate[mackeycode] = press;
+			play(key, press);
+			break;
+		}
 		default:
 			break;
 	}
@@ -185,7 +229,10 @@ int scan(int verbose)
 
 	/* Create an event tap. We are interested in key presses. */
 
-	eventMask = ((1 << kCGEventKeyDown) | (1 << kCGEventKeyUp));
+	eventMask = ((1 << kCGEventKeyDown)
+	           | (1 << kCGEventKeyUp)
+	           | (1 << kCGEventFlagsChanged)
+	           | (1 << NX_SYSDEFINED));
 	eventTap = CGEventTapCreate(kCGSessionEventTap, kCGHeadInsertEventTap, 0, eventMask, myCGEventCallback, NULL);
 	if (!eventTap) {
 		fprintf(stderr, "failed to create event tap\n");
