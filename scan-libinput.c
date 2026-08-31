@@ -6,6 +6,7 @@
 #include <errno.h>
 
 #include <libinput.h>
+#include <linux/input-event-codes.h>
 
 #include "buckle.h"
 
@@ -43,6 +44,16 @@ static void handle_key(struct libinput_event *ev)
 	play(key, state == LIBINPUT_KEY_STATE_PRESSED);
 }
 
+static void handle_button(struct libinput_event *ev)
+{
+	struct libinput_event_pointer *p = libinput_event_get_pointer_event(ev);
+	enum libinput_button_state state = libinput_event_pointer_get_button_state(p);
+	uint32_t button = libinput_event_pointer_get_button(p);
+
+	if(button == BTN_LEFT || button == BTN_RIGHT)
+		play(0xff, state == LIBINPUT_BUTTON_STATE_PRESSED);
+}
+
 static void handle_events(struct libinput *li)
 {
 	struct libinput_event *ev;
@@ -54,6 +65,9 @@ static void handle_events(struct libinput *li)
 		switch(libinput_event_get_type(ev)) {
 			case LIBINPUT_EVENT_KEYBOARD_KEY:
 				handle_key(ev);
+				break;
+			case LIBINPUT_EVENT_POINTER_BUTTON:
+				handle_button(ev);
 				break;
 			default:
 				break;
