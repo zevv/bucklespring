@@ -13,6 +13,8 @@ CFLAGS  += -Wall -Werror
 CFLAGS  += -DVERSION=\"$(VERSION)\"
 CFLAGS  += -DPATH_AUDIO=\"$(PATH_AUDIO)\"
 
+PKG_CONFIG ?= $(CROSS)pkg-config
+
  ifeq ($(OS),Windows_NT)
  BIN     := $(NAME).exe
  CFLAGS  += -I"win32/include"
@@ -25,19 +27,19 @@ else
  ifeq ($(OS), Darwin)
   BIN     := $(NAME)
   PKG_CONFIG_PATH := "./mac/lib/pkgconfig" 
-  LIBS    += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs alure openal)
-  CFLAGS  += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags alure openal)
+  LIBS    += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) $(PKG_CONFIG) --libs alure openal)
+  CFLAGS  += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) $(PKG_CONFIG) --cflags alure openal)
   LDFLAGS += -framework ApplicationServices -framework OpenAL
   SRC     += scan-mac.c
  else
   BIN     := $(NAME)
   ifdef libinput
-   LIBS    += $(shell pkg-config --libs openal alure libinput libudev)
-   CFLAGS  += $(shell pkg-config --cflags openal alure libinput libudev)
+   LIBS    += $(shell $(PKG_CONFIG) --libs openal alure libinput libudev)
+   CFLAGS  += $(shell $(PKG_CONFIG) --cflags openal alure libinput libudev)
    SRC     += scan-libinput.c
   else
-   LIBS    += $(shell pkg-config --libs openal alure xtst x11)
-   CFLAGS  += $(shell pkg-config --cflags openal alure xtst x11)
+   LIBS    += $(shell $(PKG_CONFIG) --libs openal alure xtst x11)
+   CFLAGS  += $(shell $(PKG_CONFIG) --cflags openal alure xtst x11)
    SRC     += scan-x11.c
   endif
  endif
@@ -62,7 +64,7 @@ dist:
 	rm -rf $(NAME)-$(VERSION)
 
 rec: rec.c
-	gcc -Wall -Werror rec.c -o rec
+	$(CC) -Wall -Werror rec.c -o rec
 
 clean:
 	$(RM) $(OBJS) $(BIN) core rec
