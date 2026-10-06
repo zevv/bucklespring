@@ -1,0 +1,40 @@
+# Grant the user who is physically logged in at the local seat read access to
+# the keyboard and pointer event devices, so that buckle-libinput, the flavour
+# for Wayland and the console, can read key and mouse button events without
+# running as root and without being a member of the "input" group.
+#
+# Access is handed out by systemd-logind as a POSIX ACL on the device, is
+# limited to the active local session, and is revoked again at logout.
+#
+# This rule does nothing until the administrator creates the flag file
+# @sysconfdir@/bucklespring/uaccess:
+#
+#   # touch @sysconfdir@/bucklespring/uaccess
+#   # udevadm trigger --subsystem-match=input --action=change
+#
+# Deleting the flag file and triggering again takes the access away.  It is off
+# by default because it lets every process of the logged in user read all
+# keystrokes system wide, including passwords typed into other applications.
+#
+# To change what this rule does, copy it into /etc/udev/rules.d/ under the same
+# name and edit it there; that copy takes precedence and, unlike this file, is
+# not overwritten on upgrade.  A symlink there to /dev/null disables the rule
+# outright.
+#
+# The 70- prefix matters: it sorts this file after 60-persistent-input.rules,
+# which is what sets ID_INPUT_KEYBOARD, and before 73-seat-late.rules, which
+# acts on the uaccess tag.
+
+ACTION=="remove", GOTO="bucklespring_end"
+TEST!="@sysconfdir@/bucklespring/uaccess", GOTO="bucklespring_end"
+
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_KEYBOARD}=="1", TAG+="uaccess"
+# The next two lines are only needed for the click sound on the mouse buttons
+# and the scroll wheel; drop them if you would rather not hand out the pointer
+# devices as well, or pass --mouse=none to turn the sound off instead.  A wheel
+# needs nothing beyond ID_INPUT_MOUSE, which is already set on any mouse that
+# has one.
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_MOUSE}=="1", TAG+="uaccess"
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_TOUCHPAD}=="1", TAG+="uaccess"
+
+LABEL="bucklespring_end"

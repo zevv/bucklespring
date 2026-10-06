@@ -1,10 +1,11 @@
 [Desktop Entry]
 
 Type=Application
-Name=Buckle
+Name=Buckle (libinput)
 Comment=Bucklespring keyboard sound
-Exec=buckle -f
+Exec=buckle-libinput -f
 Icon=input-keyboard
+Keywords=keyboard;sound;typewriter;nostalgia;
 StartupNotify=false
 Terminal=false
 Hidden=false

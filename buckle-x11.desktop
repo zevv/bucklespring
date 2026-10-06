@@ -1,0 +1,12 @@
+[Desktop Entry]
+
+Type=Application
+Name=Buckle (X11)
+Comment=Bucklespring keyboard sound
+Exec=buckle-x11 -f
+Icon=input-keyboard
+Keywords=keyboard;sound;typewriter;nostalgia;
+StartupNotify=false
+Terminal=false
+Hidden=false
+

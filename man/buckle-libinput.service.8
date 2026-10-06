@@ -1,0 +1,91 @@
+.TH BUCKLE\-LIBINPUT.SERVICE "8" "September 2026" "Nostalgia bucklespring keyboard sound" "System Manager Configuration"
+.SH NAME
+buckle\-libinput.service \- systemd user unit for the bucklespring keyboard sound
+.SH SYNOPSIS
+.B buckle\-libinput.service
+.PP
+.B /usr/lib/systemd/user/buckle\-libinput.service
+.SH DESCRIPTION
+A
+.BR systemd (1)
+user unit which runs
+.BR buckle\-libinput (1)
+for the duration of a desktop session, so that the keyboard sounds like an IBM
+Model M without anything having to be started by hand.
+.PP
+The unit is shipped disabled: a program that makes a noise on every keystroke
+is better asked for than sprung on you.  Enable it, for your own account only,
+with
+.PP
+.RS
+.B systemctl \-\-user enable \-\-now buckle\-libinput
+.RE
+.PP
+and undo that with
+.BR "systemctl \-\-user disable \-\-now buckle\-libinput" .
+Neither needs root.
+.SH SESSION LIFETIME
+The unit is wanted by
+.IR graphical\-session.target ,
+and declared
+.I PartOf
+it, so it follows that target, which the desktop session starts at login and
+which is stopped again at logout.
+So the sound follows the session on the local seat: it begins when you log in
+there and ends when you log out.
+.PP
+That is deliberately not
+.IR default.target .
+Where the account has lingering enabled, see
+.BR loginctl (1),
+the per user service manager is started at boot and kept running until
+shutdown, whether or not anybody is logged in; a unit wanted by
+.I default.target
+would then play to an empty room.
+.PP
+There is no equivalent for a login on a plain text console.  systemd has a
+target for the graphical session but none for a session on a tty, and
+.B systemctl \-\-user
+units live in one service manager per user rather than one per session, so
+there is nothing for such a unit to follow.  On the console start it by hand.
+.SH CONDITIONS
+The unit carries a
+.I ConditionPathExists
+on
+.IR /etc/bucklespring/uaccess ,
+the flag file which arms the udev rule that grants the user at the local seat
+read access to the input devices.  Until that access has been granted
+.BR buckle\-libinput (1)
+has nothing to listen to, so the unit stays inert rather than starting a
+process which can only fail.  The comments in the udev rule,
+.IR 70\-bucklespring\-libinput.rules ,
+say how to arm it and what it costs you.
+.PP
+When granting the access some other way, such as through the
+.I input
+group, override the condition with
+.PP
+.RS
+.B systemctl \-\-user edit buckle\-libinput
+.RE
+.PP
+putting
+.I ConditionPathExists=
+on a line of its own in the drop-in to clear it.
+.SH FILES
+.TP
+.I /usr/lib/systemd/user/buckle\-libinput.service
+The unit itself.  Do not edit it; it is replaced on upgrade.
+.TP
+.I ~/.config/systemd/user/buckle\-libinput.service.d/
+Drop-in directory for local changes, as created by
+.BR "systemctl \-\-user edit buckle\-libinput" .
+.TP
+.I /etc/bucklespring/uaccess
+Flag file the unit is conditioned on.
+.SH SEE ALSO
+.BR buckle\-libinput (1),
+.BR buckle\-x11.service (8),
+.BR systemd.unit (5),
+.BR systemctl (1),
+.BR loginctl (1)

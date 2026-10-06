@@ -1,3 +1,26 @@
+/*
+ * Autoconf writes the package name and version into config.h; the Makefile
+ * shipped with the source passes VERSION on the command line instead.  Take
+ * whichever is there, under the names autoconf uses, so that moving the build
+ * to autoconf and automake needs nothing here beyond AC_CONFIG_HEADERS: the
+ * fallbacks simply stop being reached.
+ *
+ * This has to come before the system headers, as config.h is where autoconf
+ * puts the feature test macros that decide what they declare.
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifndef PACKAGE_NAME
+#define PACKAGE_NAME "bucklespring"
+#endif
+
+#ifndef PACKAGE_VERSION
+#define PACKAGE_VERSION VERSION
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +33,7 @@
 #include <stdbool.h>
 #include <getopt.h>
 #include <time.h>
+#include <pthread.h>
 
 #ifdef __APPLE__
 #include <OpenAL/al.h>
@@ -33,8 +57,15 @@
 	}
 
 
-static void usage(char *exe);
+static void usage(char *exe, int status);
+static void version(char *exe);
 static void list_devices(void);
+static int parse_mouse(const char *arg);
+static void audio_forget_sources(void);
+static ALCenum device_specifier(void);
+static const char *default_device_name(void);
+static int audio_open(const char *name);
+static void audio_close(void);
 static double find_key_loc(int code);
 
 
@@ -68,17 +99,43 @@ static double midloc[] = {
 };
 
 static int opt_verbose = 0;
-static int opt_no_click = 0;
 static int opt_stereo_width = 50;
 static int opt_gain = 100;
 static int opt_fallback_sound = 0;
 static int opt_mute_keycode = DEFAULT_MUTE_KEYCODE;
+static int opt_no_repeat = 0;
+static int opt_mouse = MOUSE_ALL;
+static int opt_no_tray = 0;
+static int opt_repeat_delay = 0;
+static int opt_repeat_rate = 0;
 static const char *opt_device = NULL;
 static const char *opt_path_audio = PATH_AUDIO;
 static int muted = 0;
 
+/*
+ * The samples, the sources playing them and the device they go to.  These used
+ * to be locals of play() and of main(), which was fine while the program was
+ * one thread deep in the key event loop.  The tray, when there is one, runs
+ * the GTK loop on the main thread and changes the gain, the mute and even the
+ * output device from there, so the lot moves out here behind one lock.  Every
+ * al* call in this file is made with it held.
+ */
 
-static const char short_opts[] = "d:fg:hlm:Mp:s:cv";
+static pthread_mutex_t audio_lock = PTHREAD_MUTEX_INITIALIZER;
+static ALCdevice *device = NULL;
+static ALCcontext *context = NULL;
+static ALuint buf[512];
+static ALuint src[512];
+
+
+/* Options with no short form of their own start past the character codes. */
+enum {
+	OPT_REPEAT_DELAY = 256,
+	OPT_REPEAT_RATE,
+	OPT_NO_TRAY,
+};
+
+static const char short_opts[] = "d:fg:hlm:Mp:rs:c::vV";
 
 static const struct option long_opts[] = {
 	{ "device",         required_argument, NULL, 'd' },
@@ -89,12 +146,27 @@ static const struct option long_opts[] = {
 	{ "mute-keycode",   required_argument, NULL, 'm' },
 	{ "mute",           no_argument,       NULL, 'M' },
 	{ "audio-path",     required_argument, NULL, 'p' },
+	{ "no-repeat",      no_argument,       NULL, 'r' },
+	{ "repeat-delay",   required_argument, NULL, OPT_REPEAT_DELAY },
+	{ "repeat-rate",    required_argument, NULL, OPT_REPEAT_RATE },
 	{ "stereo-width",   required_argument, NULL, 's' },
-	{ "no-click",       no_argument,       NULL, 'c' },
+	{ "no-tray",        no_argument,       NULL, OPT_NO_TRAY },
+	{ "no-click",       optional_argument, NULL, 'c' },
 	{ "verbose",        no_argument,       NULL, 'v' },
+	{ "version",        no_argument,       NULL, 'V' },
         { 0, 0, 0, 0 }
 };
 
+
+
+#ifdef HAVE_TRAY
+static void *scan_thread(void *arg)
+{
+	(void)arg;
+	scan(opt_verbose);
+	return NULL;
+}
+#endif
 
 
 int main(int argc, char **argv)
@@ -116,7 +188,7 @@ int main(int argc, char **argv)
 				opt_gain = atoi(optarg);
 				break;
 			case 'h':
-				usage(argv[0]);
+				usage(argv[0], 0);
 				return 0;
 			case 'l':
 				list_devices();
@@ -130,17 +202,34 @@ int main(int argc, char **argv)
 			case 'p':
 				opt_path_audio = optarg;
 				break;
+			case 'r':
+				opt_no_repeat = 1;
+				break;
+			case OPT_NO_TRAY:
+				opt_no_tray = 1;
+				break;
+			case OPT_REPEAT_DELAY:
+				opt_repeat_delay = atoi(optarg);
+				break;
+			case OPT_REPEAT_RATE:
+				opt_repeat_rate = atoi(optarg);
+				break;
 			case 's':
 				opt_stereo_width = atoi(optarg);
 				break;
 			case 'c':
-				opt_no_click++;
+				opt_mouse &= ~(optarg ? parse_mouse(optarg)
+				                      : MOUSE_ALL);
 				break;
 			case 'v':
 				opt_verbose++;
 				break;
+			case 'V':
+				version(argv[0]);
+				exit(0);
+				break;
 			default:
-				usage(argv[0]);
+				usage(argv[0], 1);
 				return 1;
 				break;
 		}
@@ -152,34 +241,19 @@ int main(int argc, char **argv)
 
 	/* Create openal context */
 
-	ALCdevice *device = NULL;
-	ALCcontext *context = NULL;
-	ALfloat listenerOri[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
-	ALCenum error;
-
 	if (!opt_device) {
-		opt_device = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+		opt_device = default_device_name();
 	}
 
 	printd("Opening OpenAL audio device \"%s\"", opt_device);
 
-	device = alcOpenDevice(opt_device);
-	if (!device) {
-		fprintf(stderr, "unable to open default device\n");
-		rv = EXIT_FAILURE;
-		goto out;
+	pthread_mutex_lock(&audio_lock);
+	if(audio_open(opt_device) < 0) {
+		pthread_mutex_unlock(&audio_lock);
+		fprintf(stderr, "unable to open audio device \"%s\"\n", opt_device);
+		return EXIT_FAILURE;
 	}
-
-	context = alcCreateContext(device, NULL);
-	if (!alcMakeContextCurrent(context)) {
-		fprintf(stderr, "failed to make default context\n");
-		return -1;
-	}
-	TEST_ERROR("make default context");
-
-	alListener3f(AL_POSITION, 0, 0, 0);
-	alListener3f(AL_VELOCITY, 0, 0, 0);
-	alListenerfv(AL_ORIENTATION, listenerOri);
+	pthread_mutex_unlock(&audio_lock);
 
 	/* Path to data files can also be specified by environment, this is
 	 * used by the snap package */
@@ -191,55 +265,488 @@ int main(int argc, char **argv)
 
 	printd("Using wav dir: \"%s\"\n", opt_path_audio);
 
-	scan(opt_verbose);
+#ifdef HAVE_TRAY
+	/*
+	 * GTK wants the main thread for its loop, and the key event loop never
+	 * returns either way, so with a tray the two swap places.  Without one
+	 * compiled in, or with no display to put it on, nothing changes.
+	 */
 
-out:
-	device = alcGetContextsDevice(context);
-	alcMakeContextCurrent(NULL);
-	if(context) alcDestroyContext(context);
-	if(device) alcCloseDevice(device);
+	if(!opt_no_tray && tray_init()) {
+		pthread_t scanner;
+
+		if(pthread_create(&scanner, NULL, scan_thread, NULL) == 0) {
+			tray_run();
+		} else {
+			fprintf(stderr, "Cannot start the key event thread\n");
+			rv = EXIT_FAILURE;
+		}
+	} else
+#endif
+	{
+		scan(opt_verbose);
+	}
+
+	pthread_mutex_lock(&audio_lock);
+	audio_forget_sources();
+	audio_close();
+	pthread_mutex_unlock(&audio_lock);
 
 	return rv;
 }
 
 
-static void usage(char *exe)
+/*
+ * Asked for with --help this goes to stdout and is the answer to a question;
+ * printed because the command line would not parse it goes to stderr and is a
+ * complaint, which is the distinction the GNU coding standards draw and what
+ * lets --help be piped into a pager without the shell losing the lot.
+ */
+
+static void usage(char *exe, int status)
 {
-	fprintf(stderr, 
+	FILE *out = status == 0 ? stdout : stderr;
+
+	fprintf(out,
 		"bucklespring version " VERSION "\n"
-		"usage: %s [options]\n"
+		"Usage: %s [options]\n"
 		"\n"
-		"options:\n"
+		"Options:\n"
 		"\n"
 		"  -d, --device=DEVICE       use OpenAL audio device DEVICE\n"
 		"  -f, --fallback-sound      use a fallback sound for unknown keys\n"
 		"  -g, --gain=GAIN           set playback gain [0..100]\n"
 		"  -m, --mute-keycode=CODE   use CODE as mute key (default 0x46 for scroll lock)\n"
 		"  -M, --mute                start the program muted\n"
-		"  -c, --no-click            don't play a sound on mouse click\n"
+		"  -c, --no-click[=LIST]     don't play a sound on mouse click; LIST\n"
+		"                            narrows it to some of left, middle, right,\n"
+		"                            side, extra, wheel, hwheel, all, none\n"
 		"  -h, --help                show help\n"
 		"  -l, --list-devices        list available OpenAL audio devices\n"
 		"  -p, --audio-path=PATH     load .wav files from directory PATH\n"
+		"  -r, --no-repeat           stay silent while a held key auto repeats\n"
+		"      --repeat-delay=MS     wait MS before the first repeat, overriding\n"
+		"                            what the compositor or the kernel says\n"
+		"      --repeat-rate=HZ      make HZ repeats per second, likewise\n"
 		"  -s, --stereo-width=WIDTH  set stereo width [0..100]\n"
-		"  -v, --verbose             increase verbosity / debugging\n",
+		"      --no-tray             do not put an icon in the system tray\n"
+		"  -v, --verbose             increase verbosity / debugging\n"
+		"  -V, --version             show version and exit\n",
 		exe
        );
 }
 
+/*
+ * --version in the shape the GNU coding standards ask for: the program, the
+ * package it belongs to and the version on the first line, then the copyright,
+ * the licence and the author.  On stdout, where the standards put it, even
+ * though the usage text goes to stderr.
+ *
+ * help2man reads the lot: the first line gives the version stamped in the page
+ * footer, and it turns the rest into the COPYRIGHT and AUTHOR sections, so
+ * neither can drift away from the program.
+ */
+
+static void version(char *exe)
+{
+	const char *name = strrchr(exe, '/');
+
+	printf("%s (%s) %s\n", name ? name + 1 : exe,
+			PACKAGE_NAME, PACKAGE_VERSION);
+	printf("Copyright (C) 2016-2025 Ico Doornekamp\n");
+	printf("License GPLv2+: GNU GPL version 2 or later"
+			" <https://gnu.org/licenses/gpl.html>.\n");
+	printf("This is free software: you are free to"
+			" change and redistribute it.\n");
+	printf("There is NO WARRANTY, to the extent permitted by law.\n");
+	printf("\n");
+	printf("Written by Ico Doornekamp.\n");
+}
+
+
+/*
+ * ALC_DEVICE_SPECIFIER is not the list of sound cards: with OpenAL Soft it is
+ * one entry, "OpenAL Soft", standing for whatever that library decides to
+ * use.  The real outputs are behind ALC_ENUMERATE_ALL_EXT, so ask for those
+ * where it is present and keep the old token only as a fallback.
+ */
+
+static ALCenum device_specifier(void)
+{
+	return alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT")
+		? ALC_ALL_DEVICES_SPECIFIER
+		: ALC_DEVICE_SPECIFIER;
+}
+
+
+static const char *default_device_name(void)
+{
+	return alcGetString(NULL,
+		alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT")
+			? ALC_DEFAULT_ALL_DEVICES_SPECIFIER
+			: ALC_DEFAULT_DEVICE_SPECIFIER);
+}
+
+
+/*
+ * The ALC device list is one run of NUL terminated names closed by an empty
+ * one.  Unpack it into something a caller can walk without knowing that.
+ */
+
+char **buckle_audio_devices(void)
+{
+	const ALCchar *s = alcGetString(NULL, device_specifier());
+	const ALCchar *p;
+	size_t n = 0, i = 0;
+	char **out;
+
+	for(p = s; p != NULL && *p != '\0'; p += strlen(p) + 1) {
+		n++;
+	}
+
+	out = calloc(n + 1, sizeof *out);
+	if(out == NULL) {
+		return NULL;
+	}
+
+	for(p = s; p != NULL && *p != '\0'; p += strlen(p) + 1) {
+		out[i] = strdup(p);
+		if(out[i] == NULL) {
+			break;
+		}
+		i++;
+	}
+
+	return out;
+}
+
+
+void buckle_audio_devices_free(char **list)
+{
+	size_t i;
+
+	if(list == NULL) {
+		return;
+	}
+	for(i = 0; list[i] != NULL; i++) {
+		free(list[i]);
+	}
+	free(list);
+}
+
+
+/* All three expect audio_lock to be held. */
+
+static void audio_forget_sources(void)
+{
+	size_t i;
+
+	for(i = 0; i < sizeof src / sizeof *src; i++) {
+		if(src[i] != 0 && src[i] != SRC_INVALID) {
+			alDeleteSources(1, &src[i]);
+		}
+		if(buf[i] != 0) {
+			alDeleteBuffers(1, &buf[i]);
+		}
+		src[i] = 0;
+		buf[i] = 0;
+	}
+}
+
+
+static int audio_open(const char *name)
+{
+	ALfloat ori[] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f };
+
+	device = alcOpenDevice(name);
+	if(device == NULL) {
+		return -1;
+	}
+
+	context = alcCreateContext(device, NULL);
+	if(context == NULL || !alcMakeContextCurrent(context)) {
+		if(context != NULL) {
+			alcDestroyContext(context);
+		}
+		alcCloseDevice(device);
+		device = NULL;
+		context = NULL;
+		return -1;
+	}
+
+	alListener3f(AL_POSITION, 0, 0, 0);
+	alListener3f(AL_VELOCITY, 0, 0, 0);
+	alListenerfv(AL_ORIENTATION, ori);
+
+	return 0;
+}
+
+
+static void audio_close(void)
+{
+	alcMakeContextCurrent(NULL);
+	if(context != NULL) {
+		alcDestroyContext(context);
+		context = NULL;
+	}
+	if(device != NULL) {
+		alcCloseDevice(device);
+		device = NULL;
+	}
+}
+
+
 static void list_devices(void)
 {
-	const ALCchar *devices = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
-	const ALCchar *device = devices, *next = devices + 1;
-	size_t len = 0;
+	char **list = buckle_audio_devices();
+	size_t i;
 
 	printf("Available audio devices:");
-	while (device && *device != '\0' && next && *next != '\0') {
-		fprintf(stdout, " \"%s\"", device);
-		len = strlen(device);
-		device += (len + 1);
-		next += (len + 2);
+	for(i = 0; list != NULL && list[i] != NULL; i++) {
+		printf(" \"%s\"", list[i]);
 	}
 	printf("\n");
+	buckle_audio_devices_free(list);
+}
+
+
+/*
+ * Should a key that the user holds down make a sound each time it auto
+ * repeats?  The backends ask, as each has to recognise a repeat its own way.
+ */
+
+/*
+ * The events --no-click can name.  "all" and "none" are the two ends of the
+ * list rather than special cases in the parser, "all" being what a bare
+ * --no-click means and "none" the option not being given at all.
+ */
+
+static const struct {
+	const char *name;
+	int bits;
+} mouse_events[] = {
+	{ "left",   MOUSE_LEFT   },
+	{ "middle", MOUSE_MIDDLE },
+	{ "right",  MOUSE_RIGHT  },
+	{ "side",   MOUSE_SIDE   },
+	{ "extra",  MOUSE_EXTRA  },
+	{ "wheel",  MOUSE_WHEEL  },
+	{ "hwheel", MOUSE_HWHEEL },
+	{ "all",    MOUSE_ALL    },
+	{ "none",   0            },
+};
+
+#define N_MOUSE_EVENTS (sizeof(mouse_events) / sizeof(mouse_events[0]))
+
+
+/* The argument of --no-click: the events to fall silent on. */
+
+static int parse_mouse(const char *arg)
+{
+	char *spec, *tok, *save = NULL;
+	int bits = 0;
+	size_t i;
+
+	spec = strdup(arg);
+	if(spec == NULL) {
+		fprintf(stderr, "Out of memory\n");
+		exit(1);
+	}
+
+	for(tok = strtok_r(spec, ",", &save); tok; tok = strtok_r(NULL, ",", &save)) {
+
+		for(i = 0; i < N_MOUSE_EVENTS; i++) {
+			if(strcmp(tok, mouse_events[i].name) == 0) {
+				break;
+			}
+		}
+
+		if(i == N_MOUSE_EVENTS) {
+			fprintf(stderr, "Unknown mouse event \"%s\"\n", tok);
+			fprintf(stderr, "Expected a comma separated list of:");
+			for(i = 0; i < N_MOUSE_EVENTS; i++) {
+				fprintf(stderr, " %s", mouse_events[i].name);
+			}
+			fprintf(stderr, "\n");
+			exit(1);
+		}
+
+		bits |= mouse_events[i].bits;
+	}
+
+	free(spec);
+
+	return bits;
+}
+
+
+/*
+ * Is this one of the mouse events the user left enabled?  Asked by both
+ * backends, which name the same events by different numbers.  Doing it here
+ * rather than in play() is what lets --no-click take a list: by the time a
+ * sound reaches play() every mouse event looks alike.
+ */
+
+int mouse_enabled(int which)
+{
+	return (opt_mouse & which) != 0;
+}
+
+
+/*
+ * What the tray can ask for and change.  Each takes the audio lock, so these
+ * are safe to call from the GTK thread while the key event loop is playing.
+ */
+
+int buckle_muted(void)
+{
+	int m;
+
+	pthread_mutex_lock(&audio_lock);
+	m = muted;
+	pthread_mutex_unlock(&audio_lock);
+
+	return m;
+}
+
+
+void buckle_set_muted(int on)
+{
+	pthread_mutex_lock(&audio_lock);
+	muted = on ? 1 : 0;
+	pthread_mutex_unlock(&audio_lock);
+}
+
+
+int buckle_gain(void)
+{
+	int g;
+
+	pthread_mutex_lock(&audio_lock);
+	g = opt_gain;
+	pthread_mutex_unlock(&audio_lock);
+
+	return g;
+}
+
+
+/* The gain is set on a source when it is first made, so the sources that
+ * already exist have to be told again. */
+
+void buckle_set_gain(int gain)
+{
+	size_t i;
+
+	if(gain < 0) { gain = 0; }
+	if(gain > 100) { gain = 100; }
+
+	pthread_mutex_lock(&audio_lock);
+	opt_gain = gain;
+	for(i = 0; i < sizeof src / sizeof *src; i++) {
+		if(src[i] != 0 && src[i] != SRC_INVALID) {
+			alSourcef(src[i], AL_GAIN, opt_gain / 100.0);
+		}
+	}
+	pthread_mutex_unlock(&audio_lock);
+}
+
+
+/*
+ * The name of the device that is open, which is not always the name it was
+ * opened by: asking for the default gets a real output back.  Copied into a
+ * buffer because the string belongs to the device and would dangle the moment
+ * one is closed; only the tray calls this, and only from the GTK thread.
+ */
+
+const char *buckle_audio_device(void)
+{
+	static char name[256];
+	const ALCchar *s = NULL;
+
+	pthread_mutex_lock(&audio_lock);
+	if(device != NULL) {
+		s = alcGetString(device, device_specifier());
+	}
+	if(s == NULL) {
+		s = opt_device;
+	}
+	snprintf(name, sizeof name, "%s", s != NULL ? s : "");
+	pthread_mutex_unlock(&audio_lock);
+
+	return name;
+}
+
+
+/*
+ * Move to another output device.  The samples are bound to sources which
+ * belong to the old context, so they go with it and play() loads them again
+ * on demand.  On failure the old device is reopened, as having no device at
+ * all would leave the program running and silent with no way back.
+ */
+
+int buckle_set_audio_device(const char *name)
+{
+	const char *old = opt_device;
+	int rv = 0;
+
+	pthread_mutex_lock(&audio_lock);
+
+	audio_forget_sources();
+	audio_close();
+
+	if(audio_open(name) == 0) {
+		opt_device = name;
+	} else if(audio_open(old) == 0) {
+		rv = -1;
+	} else {
+		fprintf(stderr, "Lost the audio device \"%s\" and could not get "
+				"\"%s\" back\n", name, old);
+		rv = -1;
+	}
+
+	pthread_mutex_unlock(&audio_lock);
+
+	return rv;
+}
+
+
+int buckle_mute_keycode(void)
+{
+	return opt_mute_keycode;
+}
+
+
+void buckle_quit(void)
+{
+	pthread_mutex_lock(&audio_lock);
+	audio_forget_sources();
+	audio_close();
+	pthread_mutex_unlock(&audio_lock);
+
+	exit(EXIT_SUCCESS);
+}
+
+
+int repeat_enabled(void)
+{
+	return !opt_no_repeat;
+}
+
+
+/*
+ * The backend works out how fast the keyboard repeats and then offers the
+ * answer here, so that anyone who disagrees with it can say so on the command
+ * line.  Values left at zero are the ones the user did not care about.
+ */
+
+void repeat_override(int *delay_ms, int *period_ms)
+{
+	if(opt_repeat_delay > 0) {
+		*delay_ms = opt_repeat_delay;
+	}
+	if(opt_repeat_rate > 0) {
+		*period_ms = 1000 / opt_repeat_rate;
+	}
 }
 
 
@@ -322,16 +829,13 @@ int play(int code, int press)
 
 	printd("scancode %d/0x%x", code, code);
 
-	if (code == 0xff && opt_no_click) return 0;
+	pthread_mutex_lock(&audio_lock);
 
 	/* Check for mute sequence: ScrollLock down+up+down */
 
 	if (press) {
 		handle_mute_key(code == opt_mute_keycode);
 	}
-
-	static ALuint buf[512] = { 0 };
-	static ALuint src[512] = { 0 };
 
 	int idx = code + press * 256;
 
@@ -354,6 +858,7 @@ int play(int code, int press)
 
 			if(buf[idx] == 0) {
 				src[idx] = SRC_INVALID;
+				pthread_mutex_unlock(&audio_lock);
 				return -1;
 			}
 		}
@@ -377,6 +882,8 @@ int play(int code, int press)
 			alSourcePlay(src[idx]);
 		TEST_ERROR("source playing");
 	}
+
+	pthread_mutex_unlock(&audio_lock);
 
 	return 0;
 }

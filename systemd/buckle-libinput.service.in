@@ -1,0 +1,35 @@
+[Unit]
+Description=Nostalgia bucklespring keyboard sound (libinput flavour)
+Documentation=man:buckle-libinput.service(8) man:buckle-libinput(1)
+# Tie the service to the desktop session rather than to the user manager.
+# Where the user has lingering enabled the user manager, and with it
+# default.target, stays up from boot to shutdown, so a unit wanted by
+# default.target would keep playing to an empty room.  graphical-session.target
+# is started by the session at login and stopped at logout, on the local seat
+# only, which is what we want here.
+PartOf=graphical-session.target
+After=graphical-session.target
+# The raw input devices are readable only by the user at the local seat, and
+# only once the uaccess udev rule has been armed; the comments in
+# 70-bucklespring-libinput.rules say how.  When granting the access some other
+# way, such as through the input group, drop this condition with
+# "systemctl --user edit buckle-libinput".
+ConditionPathExists=@sysconfdir@/bucklespring/uaccess
+
+[Service]
+Type=exec
+ExecStart=@bindir@/buckle-libinput
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=graphical-session.target

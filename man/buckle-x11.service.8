@@ -1,0 +1,64 @@
+.TH BUCKLE\-X11.SERVICE "8" "September 2026" "Nostalgia bucklespring keyboard sound" "System Manager Configuration"
+.SH NAME
+buckle\-x11.service \- systemd user unit for the bucklespring keyboard sound
+.SH SYNOPSIS
+.B buckle\-x11.service
+.PP
+.B /usr/lib/systemd/user/buckle\-x11.service
+.SH DESCRIPTION
+A
+.BR systemd (1)
+user unit which runs
+.BR buckle\-x11 (1)
+for the duration of a desktop session, so that the keyboard sounds like an IBM
+Model M without anything having to be started by hand.
+.PP
+The unit is shipped disabled: a program that makes a noise on every keystroke
+is better asked for than sprung on you.  Enable it, for your own account only,
+with
+.PP
+.RS
+.B systemctl \-\-user enable \-\-now buckle\-x11
+.RE
+.PP
+and undo that with
+.BR "systemctl \-\-user disable \-\-now buckle\-x11" .
+Neither needs root.
+.SH SESSION LIFETIME
+The unit is wanted by
+.IR graphical\-session.target ,
+and declared
+.I PartOf
+it, so it follows that target, which the desktop session starts at login and
+which is stopped again at logout.
+So the sound follows the session on the local seat: it begins when you log in
+there and ends when you log out.
+.PP
+That is deliberately not
+.IR default.target .
+Where the account has lingering enabled, see
+.BR loginctl (1),
+the per user service manager is started at boot and kept running until
+shutdown, whether or not anybody is logged in; a unit wanted by
+.I default.target
+would then play to an empty room.
+.PP
+There is no equivalent for a login on a plain text console.  systemd has a
+target for the graphical session but none for a session on a tty, and
+.B systemctl \-\-user
+units live in one service manager per user rather than one per session, so
+there is nothing for such a unit to follow.  On the console start it by hand.
+.SH FILES
+.TP
+.I /usr/lib/systemd/user/buckle\-x11.service
+The unit itself.  Do not edit it; it is replaced on upgrade.
+.TP
+.I ~/.config/systemd/user/buckle\-x11.service.d/
+Drop-in directory for local changes, as created by
+.BR "systemctl \-\-user edit buckle\-x11" .
+.SH SEE ALSO
+.BR buckle\-x11 (1),
+.BR buckle\-libinput.service (8),
+.BR systemd.unit (5),
+.BR systemctl (1),
+.BR loginctl (1)

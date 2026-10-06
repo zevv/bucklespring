@@ -1,0 +1,88 @@
+This file is a help2man include.  A [section] block goes in at the start of
+that section and a [=section] block replaces it, while a /pattern/ block goes
+in after the paragraph matching the pattern.  The note at the foot of this
+file is attached to a pattern so that it lands at the end of COPYRIGHT, after
+the copyright help2man makes out of --version, rather than ahead of it.
+Should help2man's wording ever change, that note goes missing rather than
+turning up in the wrong place.
+
+[NAME]
+buckle\-libinput \- Nostalgia bucklespring keyboard sound, libinput flavour
+
+[=DESCRIPTION]
+Buckle emulates the sound of an old IBM Model-M space saver
+bucklespring keyboard while typing.
+.PP
+It runs as a background process and plays back the sound of each key
+pressed and released on the keyboard, just as if using an IBM Model-M.
+The sound of each key has carefully been sampled, and is played back
+while simulating the proper distance and direction for a realistic 3D
+sound palette of pure nostalgic bliss.
+.PP
+This flavour reads key events straight from the raw input devices in
+.I /dev/input
+through libinput, rather than from X11, so that it also works under a Wayland
+compositor and on the console.  Those devices are not readable for ordinary
+users out of the box, and running it as root is no answer, as it then no
+longer reaches the sound daemon of the user session.  The udev rule installed
+with this flavour,
+.IR 70\-bucklespring\-libinput.rules ,
+grants that access to the user at the local seat, and is inert until armed;
+read the comments in it for how, and for what it costs you.
+.PP
+libinput discards the key repeat the kernel generates for a held key and
+leaves repeating to its caller, so this flavour keeps its own clock.  Nothing
+can tell it when a repeat has actually happened: a Wayland compositor sends
+no event per repeat, it tells each client the delay and the rate once and
+every client then runs a timer of its own, so the repeats that put characters
+on the screen exist only inside whichever window has the focus.  What can be
+had is the delay and the rate themselves, and buckle asks in turn the
+compositor, which is authoritative under Wayland, then the input device,
+which is authoritative on the console, falling back on the kernel default of
+250 ms and then one click every 33 ms.  Should it still disagree with what
+you see on the screen, set it with
+.B \-\-repeat\-delay
+and
+.BR \-\-repeat\-rate .
+Modifier keys never repeat.  Use
+.B \-r
+for the older behaviour, a single click however long the key is held.
+.PP
+The mouse clicks too: the buttons, and the scroll wheel, one click per detent.
+Two fingers scrolling on a touchpad make no sound, having no detents to make
+one for.  Use
+.B \-\-no\-click
+to silence it, or to silence only some of it.  Reading the mouse
+needs access to the pointer devices as well as the keyboard ones, which the
+shipped udev rule grants together.
+.PP
+The X11 flavour is
+.BR buckle\-x11 (1).
+
+Where it was built with the system tray, and there is a tray to put it in, an
+icon appears there with a menu for pausing, the volume, the output device and
+quitting.  The volume is a submenu of levels with
+.B +
+and
+.B \-
+at the ends of it, and rolling the wheel over the icon changes it without
+opening the menu at all.
+.B \-\-no\-tray
+leaves it out.  The icon is a StatusNotifierItem, which KDE Plasma shows as it
+is and GNOME Shell shows through an extension; where nothing is listening
+there is simply no icon and nothing else changes.
+
+[SEE ALSO]
+.BR buckle\-libinput.service (8),
+.BR buckle\-x11 (1),
+.BR update\-alternatives (1)
+
+/NO WARRANTY/
+.PP
+This manual page is generated from the output of
+.B buckle\-libinput \-\-help
+and
+.B \-\-version
+by
+.BR help2man (1),
+around wording written by Dominik George for the Debian project.
